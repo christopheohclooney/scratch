@@ -1,0 +1,369 @@
+<!-- ============================================================
+  Balance Martial Arts — Canary Wharf BJJ
+  Floating WhatsApp chat widget (self-contained, no dependencies)
+  Paste into Framer: Site Settings → Custom Code → End of <body>
+  Set your number in BMA_WA_PHONE below (digits only, country code,
+  no "+", e.g. 447700900123).
+============================================================= -->
+<div id="bma-wa-root">
+  <style>
+    #bma-wa-root, #bma-wa-root * { margin: 0; padding: 0; box-sizing: border-box; }
+    #bma-wa-root {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 9999;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      pointer-events: none; /* children re-enable */
+    }
+
+    /* ---------- Launcher (collapsed state) ---------- */
+    #bma-wa-launcher {
+      pointer-events: auto;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 68px;
+      height: 68px;
+      margin-left: auto;
+      border: 0;
+      border-radius: 50%;
+      background: #25d366;
+      color: #ffffff;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+      opacity: 0;
+      transform: scale(0.4);
+      animation: bma-wa-launcher-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 1.5s forwards;
+    }
+    #bma-wa-launcher svg { width: 36px; height: 36px; display: block; }
+    #bma-wa-launcher:hover { filter: brightness(1.05); }
+    #bma-wa-root.bma-wa-open #bma-wa-launcher { display: none; }
+
+    @keyframes bma-wa-launcher-in {
+      0%   { opacity: 0; transform: scale(0.4); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Pulse ring — loops while collapsed and not yet interacted with */
+    #bma-wa-launcher::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.55);
+      animation: bma-wa-pulse 2.2s ease-out 2.1s infinite;
+      pointer-events: none;
+    }
+    #bma-wa-root.bma-wa-touched #bma-wa-launcher::before { animation: none; }
+
+    @keyframes bma-wa-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.55); }
+      70%  { box-shadow: 0 0 0 18px rgba(37, 211, 102, 0); }
+      100% { box-shadow: 0 0 0 18px rgba(37, 211, 102, 0); }
+    }
+
+    /* Red notification dot on the launcher */
+    #bma-wa-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #ff3b30;
+      border: 2px solid #ffffff;
+    }
+    #bma-wa-root.bma-wa-open #bma-wa-badge,
+    #bma-wa-root.bma-wa-read #bma-wa-badge { display: none; }
+
+    /* ---------- Card (open state) ---------- */
+    #bma-wa-card {
+      pointer-events: auto;
+      display: none;
+      width: 360px;
+      max-width: calc(100vw - 24px);
+      padding: 28px;
+      border-radius: 24px;
+      background: #202832;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+      transform-origin: bottom right;
+    }
+    #bma-wa-root.bma-wa-open #bma-wa-card { display: block; }
+
+    /* First (auto) open: springy scale + rise */
+    #bma-wa-root.bma-wa-open.bma-wa-anim #bma-wa-card {
+      animation: bma-wa-card-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    @keyframes bma-wa-card-in {
+      0%   { opacity: 0; transform: scale(0.9) translateY(14px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* Manual reopen: fast plain fade, no stagger */
+    #bma-wa-root.bma-wa-open.bma-wa-fast #bma-wa-card {
+      animation: bma-wa-card-fast 0.15s ease-out both;
+    }
+    @keyframes bma-wa-card-fast {
+      0%   { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    /* Header row */
+    #bma-wa-header {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding-right: 28px; /* keep clear of the close button */
+    }
+    #bma-wa-avatar {
+      position: relative;
+      flex: 0 0 auto;
+      width: 72px;
+      height: 72px;
+    }
+    #bma-wa-avatar > svg {
+      width: 72px;
+      height: 72px;
+      display: block;
+      border-radius: 50%;
+    }
+    #bma-wa-status-dot {
+      position: absolute;
+      right: 1px;
+      bottom: 1px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #2ecc71;
+      border: 3px solid #202832;
+    }
+    #bma-wa-name {
+      font-size: 22px;
+      line-height: 1.25;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    #bma-wa-presence {
+      margin-top: 3px;
+      font-size: 16px;
+      line-height: 1.3;
+      font-weight: 400;
+      color: #9aa4b0;
+    }
+
+    /* Close button */
+    #bma-wa-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      background: transparent;
+      color: #8b96a3;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    #bma-wa-close:hover { color: #c3ccd6; }
+    #bma-wa-close svg { width: 18px; height: 18px; display: block; }
+    #bma-wa-card { position: relative; }
+
+    /* Divider — spans the full card width */
+    #bma-wa-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 22px -28px 20px;
+    }
+
+    /* Faint timestamp above the bubble */
+    #bma-wa-time {
+      text-align: center;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.14);
+      margin-bottom: 14px;
+      user-select: none;
+    }
+
+    /* Message bubble with top-left tail */
+    #bma-wa-bubble {
+      position: relative;
+      background: #59636e;
+      color: #ffffff;
+      border-radius: 18px;
+      border-top-left-radius: 4px;
+      padding: 18px 20px;
+      margin-left: 10px;
+      margin-right: 6px;
+      font-size: 18px;
+      line-height: 1.45;
+    }
+    #bma-wa-bubble::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -9px;
+      width: 0;
+      height: 0;
+      border-top: 14px solid #59636e;
+      border-left: 10px solid transparent;
+    }
+
+    /* CTA button */
+    #bma-wa-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      height: 56px;
+      margin-top: 26px;
+      border-radius: 28px;
+      background: #4ad06a;
+      color: #ffffff;
+      font-size: 19px;
+      font-weight: 700;
+      text-decoration: none;
+      font-family: inherit;
+    }
+    #bma-wa-cta:hover { filter: brightness(1.04); }
+    #bma-wa-cta svg { width: 28px; height: 28px; display: block; flex: 0 0 auto; }
+
+    /* Staggered reveal on the first (auto) open only */
+    #bma-wa-root.bma-wa-open.bma-wa-anim #bma-wa-bubble,
+    #bma-wa-root.bma-wa-open.bma-wa-anim #bma-wa-cta {
+      opacity: 0;
+      animation: bma-wa-rise 0.35s ease-out forwards;
+    }
+    #bma-wa-root.bma-wa-open.bma-wa-anim #bma-wa-bubble { animation-delay: 0.18s; }
+    #bma-wa-root.bma-wa-open.bma-wa-anim #bma-wa-cta    { animation-delay: 0.28s; }
+    @keyframes bma-wa-rise {
+      0%   { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Small screens */
+    @media (max-width: 420px) {
+      #bma-wa-root { right: 12px; bottom: 14px; }
+      #bma-wa-card { padding: 22px; }
+      #bma-wa-divider { margin-left: -22px; margin-right: -22px; }
+      #bma-wa-name { font-size: 20px; }
+      #bma-wa-bubble { font-size: 16px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #bma-wa-root *, #bma-wa-root *::before { animation-duration: 0.01s !important; animation-delay: 0s !important; }
+    }
+  </style>
+
+  <!-- Open card -->
+  <div id="bma-wa-card" role="dialog" aria-label="Chat with Balance Martial Arts — Canary Wharf BJJ on WhatsApp">
+    <button id="bma-wa-close" type="button" aria-label="Close chat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+        <path d="M5 5l14 14M19 5L5 19"/>
+      </svg>
+    </button>
+
+    <div id="bma-wa-header">
+      <div id="bma-wa-avatar" aria-hidden="true">
+        <!-- Balance Martial Arts badge (inline placeholder logo) -->
+        <svg viewBox="0 0 72 72">
+          <circle cx="36" cy="36" r="36" fill="#ffffff"/>
+          <circle cx="36" cy="36" r="30" fill="#0c0c0c"/>
+          <path d="M36 22 L52 48 L20 48 Z" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round"/>
+          <path d="M36 30 L46 46 L26 46 Z" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round"/>
+          <defs>
+            <path id="bma-wa-arc-top" d="M10 36 a26 26 0 0 1 52 0"/>
+            <path id="bma-wa-arc-bot" d="M12 36 a24 24 0 0 0 48 0"/>
+          </defs>
+          <text font-size="6.2" font-weight="700" fill="#ffffff" letter-spacing="1.4">
+            <textPath href="#bma-wa-arc-top" startOffset="50%" text-anchor="middle">BALANCE MARTIAL ARTS</textPath>
+          </text>
+          <text font-size="6.2" font-weight="700" fill="#ffffff" letter-spacing="1.4">
+            <textPath href="#bma-wa-arc-bot" startOffset="50%" text-anchor="middle">CANARY WHARF BJJ</textPath>
+          </text>
+        </svg>
+        <span id="bma-wa-status-dot"></span>
+      </div>
+      <div>
+        <div id="bma-wa-name">João Futscher</div>
+        <div id="bma-wa-presence">Online</div>
+      </div>
+    </div>
+
+    <div id="bma-wa-divider"></div>
+    <div id="bma-wa-time"></div>
+
+    <div id="bma-wa-bubble">Hey! 👋 Thinking about giving BJJ a go? No pressure, message me and I'll walk you through how a trial class works.</div>
+
+    <a id="bma-wa-cta" href="#" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="15" stroke="#ffffff" stroke-width="2"/>
+        <path fill="#ffffff" d="M22.6 18.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-1.9-1.8-2.3-.2-.3 0-.5.1-.6l.5-.6c.2-.2.2-.3.3-.6.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.7s1.2 3.2 1.3 3.4c.2.2 2.3 3.5 5.5 4.9.8.3 1.4.5 1.9.7.8.2 1.5.2 2 .1.6-.1 1.9-.8 2.2-1.5.3-.8.3-1.4.2-1.5-.1-.2-.3-.2-.6-.4z"/>
+      </svg>
+      <span>Chat on WhatsApp</span>
+    </a>
+  </div>
+
+  <!-- Collapsed launcher -->
+  <button id="bma-wa-launcher" type="button" aria-label="Open WhatsApp chat">
+    <svg viewBox="0 0 32 32" fill="#ffffff">
+      <path d="M16 2.7C8.7 2.7 2.8 8.6 2.8 15.9c0 2.3.6 4.6 1.8 6.6L2.7 29.3l7-1.8c1.9 1 4.1 1.6 6.3 1.6 7.3 0 13.2-5.9 13.2-13.2S23.3 2.7 16 2.7zm0 24.1c-2 0-3.9-.5-5.6-1.5l-.4-.2-4.1 1.1 1.1-4-.3-.4c-1.1-1.8-1.7-3.8-1.7-5.9C5 9.8 9.9 4.9 16 4.9s11 4.9 11 11-4.9 10.9-11 10.9zm6-8.2c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.7 0-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-1.9-1.8-2.3-.2-.3 0-.5.1-.7l.5-.6c.2-.2.2-.3.3-.6.1-.2.1-.4 0-.6-.1-.2-.7-1.8-1-2.4-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.2 1.4 3.4c.2.2 2.3 3.6 5.6 5 .8.3 1.4.5 1.9.7.8.2 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.5.3-.8.3-1.4.2-1.6-.1-.1-.3-.2-.6-.4z"/>
+    </svg>
+    <span id="bma-wa-badge"></span>
+  </button>
+
+  <script>
+    (function () {
+      var PHONE = "PHONE"; // ← replace with digits only, e.g. "447700900123"
+      var MESSAGE = "Hey João! I'd like to try a BJJ class at Balance Martial Arts.";
+
+      var root = document.getElementById("bma-wa-root");
+      var launcher = document.getElementById("bma-wa-launcher");
+      var closeBtn = document.getElementById("bma-wa-close");
+      var cta = document.getElementById("bma-wa-cta");
+      var timeEl = document.getElementById("bma-wa-time");
+
+      cta.href = "https://wa.me/" + PHONE + "?text=" + encodeURIComponent(MESSAGE);
+
+      var now = new Date();
+      var h = now.getHours(), m = now.getMinutes();
+      var ampm = h >= 12 ? "PM" : "AM";
+      timeEl.textContent = ((h % 12) || 12) + ":" + (m < 10 ? "0" : "") + m + " " + ampm;
+
+      var KEY = "bmaWaDismissed";
+      function dismissed() {
+        try { return sessionStorage.getItem(KEY) === "1"; } catch (e) { return false; }
+      }
+      function remember() {
+        try { sessionStorage.setItem(KEY, "1"); } catch (e) {}
+      }
+
+      function open(fast) {
+        root.classList.add("bma-wa-open", "bma-wa-touched", "bma-wa-read");
+        root.classList.toggle("bma-wa-fast", !!fast);
+        root.classList.toggle("bma-wa-anim", !fast);
+      }
+      function close() {
+        root.classList.remove("bma-wa-open", "bma-wa-anim", "bma-wa-fast", "bma-wa-read");
+        remember();
+      }
+
+      launcher.addEventListener("click", function () { open(true); });
+      closeBtn.addEventListener("click", close);
+
+      // Launcher pops in at 1.5s; card auto-opens ~2.5s later — unless
+      // it was dismissed earlier this browser session.
+      if (!dismissed()) {
+        setTimeout(function () {
+          if (!root.classList.contains("bma-wa-open") && !dismissed()) open(false);
+        }, 4000);
+      }
+    })();
+  </script>
+</div>
