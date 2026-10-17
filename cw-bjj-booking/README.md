@@ -54,9 +54,10 @@ Put the parameter on the Framer booking page URL (for example `/book?programme=g
 1. In Vercel, choose **Add New → Project** and import the `scratch` repo.
 2. Set **Root Directory** to `cw-bjj-booking`.
 3. Vercel detects Vite. The build command is `npm run build` and the output directory is `dist`. No environment variables are needed.
-4. Deploy, and note the production URL (for example `cw-bjj-booking.vercel.app`).
+4. Under **Settings → Environments → Production → Branch Tracking**, set the branch to `cw-bjj-form` (the branch name, not the folder name). Vercel builds `main` by default, and `main` doesn't contain the app, so it shows a 404.
+5. Push a commit to `cw-bjj-form` (or use **Create New → Deployment** and enter the branch), and note the production URL (for example `scratch-delta-three.vercel.app`).
 
-Every push to the production branch redeploys.
+Every push to the production branch redeploys. Use the production URL in Framer, not a preview link: preview links sit behind Vercel's login by default.
 
 ## Embed in Framer
 
