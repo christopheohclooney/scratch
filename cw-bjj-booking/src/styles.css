@@ -1,0 +1,423 @@
+:root {
+  --bg: #ffffff;
+  --ink: #111111;
+  --muted: #6e6e6e;
+  --disabled-text: #b8b8b8;
+  --disabled-line: #dedede;
+  --hover: #f4f4f4;
+  --rule: #ececec;
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --radius: 6px;
+  --step-gap: clamp(48px, 9vw, 72px);
+
+  /* Motion: AOJ-style quick button feedback, then a calm fade and rise for the next step. */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --press: 0.25s;
+  --activate: 0.45s;
+  --reveal: 0.6s;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+html.is-embedded,
+html.is-embedded body {
+  background: transparent;
+  overflow: hidden;
+}
+
+body {
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.flow {
+  max-width: calc(720px + 32px);
+  margin: 0 auto;
+  padding: clamp(40px, 8vw, 72px) 16px clamp(48px, 8vw, 88px);
+  text-align: center;
+}
+
+/* Intro: the site's two-line heading, dark then grey. */
+.intro__heading {
+  margin: 0 0 var(--step-gap);
+  font-size: clamp(28px, 6.4vw, 36px);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.intro__line {
+  display: block;
+}
+
+.intro__line--muted {
+  color: var(--muted);
+}
+
+/* Questions */
+.step + .step {
+  margin-top: var(--step-gap);
+}
+
+.question {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.question__legend {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0 0 24px;
+  padding: 0;
+  font: inherit;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: color var(--activate) var(--ease-out);
+}
+
+.eyebrow__mark {
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+}
+
+.question__text {
+  font-size: clamp(21px, 4.6vw, 26px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  transition: color var(--activate) var(--ease-out);
+}
+
+/* Option buttons: CW site buttons, sized up for tapping. */
+.options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 0 auto;
+}
+
+.option {
+  position: relative;
+  display: block;
+}
+
+.option__input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.option__label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 12px 18px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  transition:
+    background-color var(--press) ease,
+    color var(--press) ease,
+    border-color var(--activate) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .option__input:not(:checked):not(:disabled):hover + .option__label {
+    background: var(--hover);
+  }
+}
+
+.option__input:checked + .option__label {
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.option__input:focus-visible + .option__label {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* Upcoming steps: greyed out until the previous answer is in. */
+.step[data-state="disabled"] .eyebrow,
+.step[data-state="disabled"] .question__text,
+.step[data-state="disabled"] .text-link {
+  color: var(--disabled-text);
+}
+
+.step[data-state="disabled"] .option__label {
+  border-color: var(--disabled-line);
+  color: var(--disabled-text);
+}
+
+.step[data-state="disabled"] .option__input {
+  cursor: not-allowed;
+}
+
+.text-link {
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  cursor: pointer;
+  transition: color var(--press) ease;
+}
+
+.text-link:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.text-link:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.text-link:disabled {
+  cursor: not-allowed;
+}
+
+.help-link {
+  display: inline-block;
+  margin: -12px 0 20px;
+}
+
+/* Step 3 */
+.booking__placeholder {
+  margin: 0;
+  color: var(--disabled-text);
+  font-size: 15px;
+}
+
+.booking__summary {
+  margin-bottom: 24px;
+}
+
+.booking__programme {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.booking__note {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.booking__calendar {
+  position: relative;
+  margin: 0 -16px;
+  text-align: left;
+}
+
+.calendar-frame {
+  display: block;
+  width: 100%;
+  height: 900px;
+  border: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity var(--reveal) var(--ease-out);
+}
+
+.calendar-frame.is-loaded {
+  opacity: 1;
+}
+
+.calendar-loading {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.calendar-loading__bar {
+  position: relative;
+  width: 120px;
+  height: 1px;
+  overflow: hidden;
+  background: var(--disabled-line);
+}
+
+.calendar-loading__bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--ink);
+  animation: loading 1.4s var(--ease-out) infinite;
+}
+
+@keyframes loading {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+/* Explainer accordion, below the flow */
+.explainer {
+  margin-top: var(--step-gap);
+  padding-top: var(--step-gap);
+  border-top: 1px solid var(--rule);
+}
+
+.explainer__heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 28px;
+  font: inherit;
+}
+
+.explainer__list {
+  display: grid;
+  gap: 20px;
+  margin: 0 0 24px;
+  text-align: left;
+}
+
+.explainer__item {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.explainer__item dt {
+  font-weight: 500;
+}
+
+.explainer__item dd {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* The next step settles in: gentle fade with a slight rise. */
+.is-revealing {
+  animation: reveal var(--reveal) var(--ease-out) both;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0.35;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Larger screens: options sit in rows. */
+@media (min-width: 600px) {
+  .options--2 {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 440px;
+    gap: 16px;
+  }
+
+  .options--3 {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .options--4 {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 520px;
+    gap: 16px;
+  }
+
+  .explainer__list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px 32px;
+  }
+}
+
+@media (min-width: 768px) {
+  .options--4 {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: none;
+  }
+
+  .booking__calendar {
+    margin: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,89 @@
+<!--
+  Canary Wharf BJJ booking flow: Framer Embed snippet (HTML mode).
+
+  1. Replace YOUR-PROJECT.vercel.app below (two places) with the Vercel URL.
+  2. In Framer, add an Embed to the booking page, set it to HTML, paste all of this in.
+  3. Set the Embed's width to Fill and its height to Fit Content (or a tall fixed height).
+
+  Class pages can deep link with ?programme=gi on the Framer page URL; it's passed through.
+-->
+<div id="cwbjj-booking-wrap" style="width:100%">
+  <iframe
+    id="cwbjj-booking"
+    title="Book your first class at Canary Wharf BJJ"
+    src="https://YOUR-PROJECT.vercel.app/"
+    style="display:block;width:100%;height:900px;border:0;background:transparent"
+    scrolling="no"
+    allow="payment"
+  ></iframe>
+</div>
+<script>
+  (function () {
+    var APP_ORIGIN = "https://YOUR-PROJECT.vercel.app";
+    var BREATHING_ROOM = 0.12; /* share of the viewport left above a step when scrolling */
+
+    var frame = document.getElementById("cwbjj-booking");
+    if (frame) {
+      var programme = new URLSearchParams(window.location.search).get("programme");
+      if (programme) {
+        var url = new URL(frame.getAttribute("src"));
+        url.searchParams.set("programme", programme);
+        frame.setAttribute("src", url.toString());
+      }
+    }
+
+    /* Safe to paste in more than one place (Embed and Site Settings > Custom Code). */
+    if (window.__cwbjjBookingListener) return;
+    window.__cwbjjBookingListener = true;
+
+    /* The iframe that holds the app, or the frame that Framer wrapped around it. */
+    function findFrame(source) {
+      var frames = document.getElementsByTagName("iframe");
+      for (var i = 0; i < frames.length; i++) {
+        var w = frames[i].contentWindow;
+        if (w === source) return frames[i];
+        try {
+          if (w === source.parent) return frames[i];
+        } catch (e) {}
+      }
+      return null;
+    }
+
+    var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    var scrollFrame = 0;
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+    function scrollWindowTo(to) {
+      cancelAnimationFrame(scrollFrame);
+      var from = window.scrollY;
+      var distance = to - from;
+      if (Math.abs(distance) < 2) return;
+      if (reduceMotion.matches) return window.scrollTo(0, to);
+      var duration = Math.min(1000, Math.max(600, Math.abs(distance) * 0.9));
+      var start = performance.now();
+      (function step(now) {
+        var t = Math.min(1, ((now || start) - start) / duration);
+        window.scrollTo(0, from + distance * easeInOutCubic(t));
+        if (t < 1) scrollFrame = requestAnimationFrame(step);
+      })(start);
+    }
+
+    window.addEventListener("message", function (event) {
+      if (event.origin !== APP_ORIGIN) return;
+      var data = event.data || {};
+      var target = findFrame(event.source);
+      if (!target) return;
+
+      if (data.type === "cwbjj-booking-height" && typeof data.height === "number") {
+        target.style.height = data.height + "px";
+      }
+
+      if (data.type === "cwbjj-booking-scroll" && typeof data.top === "number") {
+        var frameTop = target.getBoundingClientRect().top + window.scrollY;
+        var to = frameTop + data.top - window.innerHeight * BREATHING_ROOM;
+        scrollWindowTo(Math.max(0, to));
+      }
+    });
+  })();
+</script>
