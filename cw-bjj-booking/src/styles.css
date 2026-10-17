@@ -1,6 +1,9 @@
 :root {
   --bg: #ffffff;
-  --ink: #111111;
+  /* Values read from canarywharfbjj.com */
+  --ink: #171717;
+  --heading: #262626;
+  --heading-muted: #a3a3a3;
   --muted: #6e6e6e;
   --disabled-text: #b8b8b8;
   --disabled-line: #dedede;
@@ -10,7 +13,7 @@
   --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
-  --radius: 6px;
+  --radius: 4px;
   --step-gap: clamp(48px, 9vw, 72px);
 
   /* Motion: AOJ-style quick button feedback, then a calm fade and rise for the next step. */
@@ -66,10 +69,11 @@ body {
 /* Intro: the site's two-line heading, dark then grey. */
 .intro__heading {
   margin: 0 0 var(--step-gap);
-  font-size: clamp(28px, 6.4vw, 36px);
-  font-weight: 500;
-  line-height: 1.15;
-  letter-spacing: -0.025em;
+  font-size: clamp(30px, 6.8vw, 40px);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  color: var(--heading);
   text-wrap: balance;
 }
 
@@ -78,7 +82,7 @@ body {
 }
 
 .intro__line--muted {
-  color: var(--muted);
+  color: var(--heading-muted);
 }
 
 /* Questions */
@@ -109,11 +113,12 @@ body {
   align-items: center;
   gap: 8px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: clamp(14px, 3.6vw, 16px);
   font-weight: 500;
-  letter-spacing: 0.08em;
+  line-height: 1.4;
+  letter-spacing: 0.2px;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--ink);
   transition: color var(--activate) var(--ease-out);
 }
 
@@ -124,10 +129,11 @@ body {
 }
 
 .question__text {
-  font-size: clamp(21px, 4.6vw, 26px);
-  font-weight: 500;
+  font-size: clamp(22px, 4.8vw, 28px);
+  font-weight: 400;
   line-height: 1.2;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.035em;
+  color: var(--heading);
   transition: color var(--activate) var(--ease-out);
 }
 
@@ -162,10 +168,10 @@ body {
   border-radius: var(--radius);
   background: var(--bg);
   color: var(--ink);
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 400;
   line-height: 1.25;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.3px;
   transition:
     background-color var(--press) ease,
     color var(--press) ease,
