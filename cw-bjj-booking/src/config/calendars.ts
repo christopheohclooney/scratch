@@ -19,7 +19,7 @@ export interface Calendar {
 export const calendars: Calendar[] = [
   {
     slug: "adult-beginners",
-    label: "Adult Beginners",
+    label: "Beginners",
     group: "adult",
     embedUrl: "https://api.leadconnectorhq.com/widget/bookings/adults-beginners-1",
   },
@@ -37,7 +37,7 @@ export const calendars: Calendar[] = [
   },
   {
     slug: "adult-striking",
-    label: "Adult Striking",
+    label: "Striking",
     group: "adult",
     embedUrl: "https://api.leadconnectorhq.com/widget/bookings/adults-striking-1",
   },
