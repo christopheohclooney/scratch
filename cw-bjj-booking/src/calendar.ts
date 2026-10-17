@@ -1,21 +1,23 @@
 import { type Calendar, ghlEmbedScript } from "./config/calendars";
 import { copy } from "./config/copy";
 
-let scriptRequested = false;
-
-/* GHL's form_embed.js listens for size messages from its widgets, so one copy covers every swap. */
-function ensureGhlScript() {
-  if (scriptRequested) return;
-  scriptRequested = true;
+/*
+  GHL's form_embed.js sizes widget iframes with a handshake that only runs for
+  iframes present when the script executes, so a swapped-in calendar would never
+  be sized. Running a fresh copy after each mount registers the new iframe. The
+  browser serves it from cache, so this costs no extra download.
+*/
+function runGhlScript() {
+  document.querySelectorAll("script[data-ghl-embed]").forEach((s) => s.remove());
   const script = document.createElement("script");
   script.src = ghlEmbedScript;
   script.async = true;
+  script.dataset.ghlEmbed = "";
   document.body.appendChild(script);
 }
 
-/* Replaces whatever is in the slot with a single calendar. Returns once the iframe is in the DOM. */
+/* Replaces whatever is in the slot with a single calendar. */
 export function mountCalendar(slot: HTMLElement, calendar: Calendar, onLoad: () => void) {
-  ensureGhlScript();
   slot.replaceChildren();
 
   const loading = document.createElement("div");
@@ -41,6 +43,7 @@ export function mountCalendar(slot: HTMLElement, calendar: Calendar, onLoad: () 
   );
 
   slot.append(loading, iframe);
+  runGhlScript();
 }
 
 export function clearCalendar(slot: HTMLElement) {
