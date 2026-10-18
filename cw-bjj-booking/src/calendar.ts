@@ -16,14 +16,24 @@ function runGhlScript() {
   document.body.appendChild(script);
 }
 
-/* Replaces whatever is in the slot with a single calendar. */
-export function mountCalendar(slot: HTMLElement, calendar: Calendar, onLoad: () => void) {
-  slot.replaceChildren();
-
+function loadingIndicator() {
   const loading = document.createElement("div");
   loading.className = "calendar-loading";
   loading.setAttribute("role", "status");
   loading.innerHTML = `<span class="calendar-loading__bar" aria-hidden="true"></span><span>${copy.step3.loading}</span>`;
+  return loading;
+}
+
+/* Shows the loading state on its own, before the calendar iframe is added. */
+export function showCalendarLoading(slot: HTMLElement) {
+  slot.replaceChildren(loadingIndicator());
+}
+
+/* Replaces whatever is in the slot with a single calendar. */
+export function mountCalendar(slot: HTMLElement, calendar: Calendar, onLoad: () => void) {
+  slot.replaceChildren();
+
+  const loading = loadingIndicator();
 
   const iframe = document.createElement("iframe");
   iframe.src = calendar.embedUrl;

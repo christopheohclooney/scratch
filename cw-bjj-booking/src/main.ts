@@ -1,7 +1,7 @@
 import "./styles.css";
 import { calendars, findCalendar, type Group } from "./config/calendars";
 import { copy } from "./config/copy";
-import { clearCalendar, mountCalendar } from "./calendar";
+import { clearCalendar, mountCalendar, showCalendarLoading } from "./calendar";
 import { isEmbedded, prefersReducedMotion, reportHeight, scrollToElement } from "./embed";
 
 interface Option {
@@ -18,8 +18,12 @@ const state: State = { group: null, slug: null };
 
 /* Pause between an answer and the scroll, so the next step starts to appear first. */
 const SCROLL_DELAY = 180;
-/* Arrow keys move through radios one by one; wait before loading a calendar for each. */
-const CALENDAR_DELAY = 220;
+/*
+  Load the calendar once the scroll has settled. GHL's widget is heavy, and loading
+  it mid-scroll makes the scroll stutter on phones. This also stops arrow keys from
+  loading a calendar for every radio they pass.
+*/
+const CALENDAR_DELAY = 1100;
 
 const escapeHtml = (s: string) =>
   s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -174,8 +178,8 @@ function renderStep3(animate: boolean) {
 
   const load = () => mountCalendar(calendarSlot, calendar, () => undefined);
   if (animate) {
-    clearCalendar(calendarSlot);
-    calendarTimer = window.setTimeout(load, CALENDAR_DELAY);
+    showCalendarLoading(calendarSlot);
+    calendarTimer = window.setTimeout(load, prefersReducedMotion() ? 0 : CALENDAR_DELAY);
   } else {
     load();
   }

@@ -21,6 +21,7 @@
 <script>
   (function () {
     var APP_ORIGIN = "https://scratch-delta-three.vercel.app";
+    var AUTO_SCROLL = true; /* set to false to stop the page scrolling to each new step */
     var BREATHING_ROOM = 0.12; /* share of the viewport left above a step when scrolling */
 
     /*
@@ -73,24 +74,11 @@
       return top + host.scrollY;
     }
 
+    /* The browser's own smooth scroll runs off the main thread, so it stays smooth while the page is busy. */
     var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    var scrollFrame = 0;
-    function easeInOutCubic(t) {
-      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    }
     function scrollHostTo(to) {
-      host.cancelAnimationFrame(scrollFrame);
-      var from = host.scrollY;
-      var distance = to - from;
-      if (Math.abs(distance) < 2) return;
-      if (reduceMotion.matches) return host.scrollTo(0, to);
-      var duration = Math.min(1000, Math.max(600, Math.abs(distance) * 0.9));
-      var start = performance.now();
-      (function step(now) {
-        var t = Math.min(1, ((now || start) - start) / duration);
-        host.scrollTo(0, from + distance * easeInOutCubic(t));
-        if (t < 1) scrollFrame = host.requestAnimationFrame(step);
-      })(start);
+      if (Math.abs(to - host.scrollY) < 2) return;
+      host.scrollTo({ top: to, behavior: reduceMotion.matches ? "auto" : "smooth" });
     }
 
     window.addEventListener("message", function (event) {
@@ -103,7 +91,7 @@
         target.style.height = data.height + "px";
       }
 
-      if (data.type === "cwbjj-booking-scroll" && typeof data.top === "number") {
+      if (AUTO_SCROLL && data.type === "cwbjj-booking-scroll" && typeof data.top === "number") {
         var to = topInHost(target) + data.top - host.innerHeight * BREATHING_ROOM;
         scrollHostTo(Math.max(0, to));
       }
