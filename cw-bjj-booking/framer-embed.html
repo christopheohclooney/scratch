@@ -22,6 +22,7 @@
   (function () {
     var APP_ORIGIN = "https://scratch-delta-three.vercel.app";
     var AUTO_SCROLL = true; /* set to false to stop the page scrolling to each new step */
+    var SCROLL_DURATION = 900; /* ms. Higher is slower; 0 uses the browser's own quicker smooth scroll. Keep it under about 900 so the scroll finishes before the calendar loads. */
     var BREATHING_ROOM = 0.12; /* share of the viewport left above a step when scrolling */
 
     /*
@@ -74,11 +75,33 @@
       return top + host.scrollY;
     }
 
-    /* The browser's own smooth scroll runs off the main thread, so it stays smooth while the page is busy. */
     var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    var scrollFrame = 0;
+    function stopScroll() {
+      host.cancelAnimationFrame(scrollFrame);
+      scrollFrame = 0;
+    }
+    /* Never fight the visitor: their own scroll or touch stops ours. */
+    host.addEventListener("wheel", stopScroll, { passive: true });
+    host.addEventListener("touchstart", stopScroll, { passive: true });
+
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
     function scrollHostTo(to) {
-      if (Math.abs(to - host.scrollY) < 2) return;
-      host.scrollTo({ top: to, behavior: reduceMotion.matches ? "auto" : "smooth" });
+      stopScroll();
+      var from = host.scrollY;
+      var distance = to - from;
+      if (Math.abs(distance) < 2) return;
+      if (reduceMotion.matches) return host.scrollTo(0, to);
+      if (!(SCROLL_DURATION > 0)) return host.scrollTo({ top: to, behavior: "smooth" });
+      var start = host.performance.now();
+      function step(now) {
+        var t = Math.min(1, (now - start) / SCROLL_DURATION);
+        host.scrollTo(0, from + distance * easeInOutCubic(t));
+        scrollFrame = t < 1 ? host.requestAnimationFrame(step) : 0;
+      }
+      scrollFrame = host.requestAnimationFrame(step);
     }
 
     window.addEventListener("message", function (event) {
