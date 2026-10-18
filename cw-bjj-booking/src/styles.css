@@ -14,7 +14,7 @@
   --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
   --radius: 4px;
-  --step-gap: clamp(48px, 9vw, 72px);
+  --step-gap: clamp(80px, 16vw, 120px);
 
   /* Motion: AOJ-style quick button feedback, then a calm fade and rise for the next step. */
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -103,7 +103,7 @@ body {
   align-items: center;
   gap: 10px;
   width: 100%;
-  margin: 0 0 24px;
+  margin: 0 0 32px;
   padding: 0;
   font: inherit;
 }
@@ -251,7 +251,7 @@ body {
 }
 
 .booking__summary {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .booking__programme {
