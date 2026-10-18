@@ -61,7 +61,7 @@ Every push to the production branch redeploys. Use the production URL in Framer,
 
 ## Embed in Framer
 
-1. Open `framer-embed.html` and replace `YOUR-PROJECT.vercel.app` with your Vercel domain. It appears twice: in the iframe `src` and in `APP_ORIGIN`.
+1. `framer-embed.html` already points at `scratch-delta-three.vercel.app`. If the Vercel address changes (for example a custom domain), update it in both places: the iframe `src` and `APP_ORIGIN`.
 2. In Framer, add an **Embed** to the booking page, set its type to **HTML**, and paste the whole file in.
 3. Set the Embed width to **Fill** and its height to **Fit Content**.
 
