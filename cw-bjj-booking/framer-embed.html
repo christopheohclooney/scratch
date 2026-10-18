@@ -6,6 +6,7 @@
   3. Set the Embed's width to Fill and its height to Fit Content (or a tall fixed height).
 
   Class pages can deep link with ?programme=gi on the Framer page URL; it's passed through.
+  Paste it only in the Embed, not in Site Settings > Custom Code as well, or the page scrolls twice.
 -->
 <div id="cwbjj-booking-wrap" style="width:100%">
   <iframe
@@ -22,9 +23,22 @@
     var APP_ORIGIN = "https://scratch-delta-three.vercel.app";
     var BREATHING_ROOM = 0.12; /* share of the viewport left above a step when scrolling */
 
+    /*
+      Framer runs Embed HTML inside its own same-origin frame, which can't scroll
+      and has no address of its own. Use the outermost page we can reach instead.
+    */
+    function findHost() {
+      var host = window;
+      try {
+        while (host !== host.parent && host.parent.document) host = host.parent;
+      } catch (e) {}
+      return host;
+    }
+    var host = findHost();
+
     var frame = document.getElementById("cwbjj-booking");
     if (frame) {
-      var programme = new URLSearchParams(window.location.search).get("programme");
+      var programme = new URLSearchParams(host.location.search).get("programme");
       if (programme) {
         var url = new URL(frame.getAttribute("src"));
         url.searchParams.set("programme", programme);
@@ -32,7 +46,6 @@
       }
     }
 
-    /* Safe to paste in more than one place (Embed and Site Settings > Custom Code). */
     if (window.__cwbjjBookingListener) return;
     window.__cwbjjBookingListener = true;
 
@@ -49,23 +62,34 @@
       return null;
     }
 
+    /* Top of an element in the host page, through any frames in between. */
+    function topInHost(el) {
+      var top = el.getBoundingClientRect().top;
+      var w = el.ownerDocument.defaultView;
+      while (w && w !== host && w.frameElement) {
+        top += w.frameElement.getBoundingClientRect().top;
+        w = w.parent;
+      }
+      return top + host.scrollY;
+    }
+
     var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     var scrollFrame = 0;
     function easeInOutCubic(t) {
       return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
-    function scrollWindowTo(to) {
-      cancelAnimationFrame(scrollFrame);
-      var from = window.scrollY;
+    function scrollHostTo(to) {
+      host.cancelAnimationFrame(scrollFrame);
+      var from = host.scrollY;
       var distance = to - from;
       if (Math.abs(distance) < 2) return;
-      if (reduceMotion.matches) return window.scrollTo(0, to);
+      if (reduceMotion.matches) return host.scrollTo(0, to);
       var duration = Math.min(1000, Math.max(600, Math.abs(distance) * 0.9));
       var start = performance.now();
       (function step(now) {
         var t = Math.min(1, ((now || start) - start) / duration);
-        window.scrollTo(0, from + distance * easeInOutCubic(t));
-        if (t < 1) scrollFrame = requestAnimationFrame(step);
+        host.scrollTo(0, from + distance * easeInOutCubic(t));
+        if (t < 1) scrollFrame = host.requestAnimationFrame(step);
       })(start);
     }
 
@@ -80,9 +104,8 @@
       }
 
       if (data.type === "cwbjj-booking-scroll" && typeof data.top === "number") {
-        var frameTop = target.getBoundingClientRect().top + window.scrollY;
-        var to = frameTop + data.top - window.innerHeight * BREATHING_ROOM;
-        scrollWindowTo(Math.max(0, to));
+        var to = topInHost(target) + data.top - host.innerHeight * BREATHING_ROOM;
+        scrollHostTo(Math.max(0, to));
       }
     });
   })();

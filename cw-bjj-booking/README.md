@@ -72,7 +72,7 @@ The snippet:
 - only accepts messages from your Vercel origin
 - forwards `?programme=` from the page URL
 
-If Framer wraps the Embed in its own frame and the height doesn't follow the content, also paste the snippet's `<script>` block into **Site Settings → General → Custom Code → End of `<body>` tag**. The script guards against running twice, and it finds the right frame either way.
+Framer runs Embed HTML inside its own invisible frame. The snippet reaches past it to scroll the real page and read its `?programme=`, so paste it only into the Embed. Don't also add it to Site Settings → Custom Code, or the page will scroll twice.
 
 ## Motion
 
