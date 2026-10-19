@@ -10,7 +10,7 @@ How it works:
 
 Later steps stay greyed out until the earlier one is answered. Changing an answer resets everything after it. Only one calendar is ever loaded at a time.
 
-Built with Vite and vanilla TypeScript. It's a static site with no backend, API keys or secrets.
+Built with Vite and vanilla TypeScript. It's a static site with no backend or secrets. It sends cookieless analytics events to PostHog (see Tracking).
 
 ## Run locally
 
@@ -32,6 +32,7 @@ npm run preview   # serve the built site on localhost:4173
 | Loading a GHL calendar and its resize script | `src/calendar.ts` |
 | Height and scroll messages to the Framer page | `src/embed.ts` |
 | Snippet to paste into Framer | `framer-embed.html` |
+| PostHog events and settings | `src/track.ts`, `src/config/analytics.ts` |
 
 ### Updating a calendar URL
 
@@ -70,7 +71,8 @@ The snippet:
 - sizes the iframe to the flow's exact height, so there's never a second scrollbar (`cwbjj-booking-height` messages)
 - smoothly scrolls the Framer page to each new step as it activates (`cwbjj-booking-scroll` messages)
 - only accepts messages from your Vercel origin
-- forwards `?programme=` from the page URL
+- forwards `?programme=` and any `utm_` parameters from the page URL
+- passes the visitor's PostHog IDs, so the site visit and the form count as one visit (it waits up to 1.5s for PostHog)
 
 Framer runs Embed HTML inside its own invisible frame. The snippet reaches past it to scroll the real page and read its `?programme=`, so paste it only into the Embed. Don't also add it to Site Settings → Custom Code, or the page will scroll twice.
 
@@ -79,3 +81,19 @@ Framer runs Embed HTML inside its own invisible frame. The snippet reaches past 
 - The motion follows the Art of Jiu Jitsu booking page. Buttons change state over 0.25s. After each answer, the next step fades in with a slight rise, and the page eases down so the new step sits near the top with some room above it (about 0.6 to 1s).
 - Timings are CSS variables in `src/styles.css`. The scroll curve is in `src/embed.ts`, with a matching copy in `framer-embed.html`.
 - With `prefers-reduced-motion`, there's no animation and scrolling is instant.
+
+## Tracking
+
+The form sends these events to PostHog, for the dashboard in `cwbjj-dashboard/`:
+
+- `booking_form_viewed` when the form loads
+- `booking_audience_selected` with `audience` (`adult` or `child`)
+- `booking_programme_selected` with `programme` (a calendar slug)
+- `booking_calendar_loaded` with `programme`, when the GHL calendar has loaded
+- `booking_completed` with `programme`, if GHL reports a finished booking
+
+Deep links send the audience and programme events too, marked `deep_link`. Every event carries the visitor's UTMs, which are also added to the GHL calendar URL.
+
+Tracking is cookieless: PostHog keeps everything in page memory. It's off until the PostHog project API key is set in `src/config/analytics.ts`.
+
+Add `?debug=1` to the form's URL to log every event, and every message from the GHL calendar, in the browser console. Use it during a test booking to see whether GHL sends `msgsndr-booking-complete`.
