@@ -6,13 +6,16 @@
   3. Set the Embed's width to Fill and its height to Fit Content (or a tall fixed height).
 
   Class pages can deep link with ?programme=gi on the Framer page URL; it's passed through.
+  UTM parameters from the visitor's landing page are passed through too, along with their
+  PostHog IDs (from the site-wide PostHog snippet), so the site visit and the form count as
+  one person. The iframe waits up to 1.5s for PostHog before loading without them.
   Paste it only in the Embed, not in Site Settings > Custom Code as well, or the page scrolls twice.
 -->
 <div id="cwbjj-booking-wrap" style="width:100%">
   <iframe
     id="cwbjj-booking"
     title="Book your first class at Canary Wharf BJJ"
-    src="https://scratch-delta-three.vercel.app/"
+    data-src="https://scratch-delta-three.vercel.app/"
     style="display:block;width:100%;height:900px;border:0;background:transparent"
     scrolling="no"
     allow="payment"
@@ -39,14 +42,37 @@
     var host = findHost();
 
     var frame = document.getElementById("cwbjj-booking");
-    if (frame) {
-      var programme = new URLSearchParams(host.location.search).get("programme");
-      if (programme) {
-        var url = new URL(frame.getAttribute("src"));
-        url.searchParams.set("programme", programme);
-        frame.setAttribute("src", url.toString());
+    var POSTHOG_WAIT = 1500; /* ms to wait for PostHog before loading the form without it */
+
+    function loadFrame() {
+      if (!frame || frame.getAttribute("src")) return;
+      var url = new URL(frame.getAttribute("data-src"));
+      var pageParams = new URLSearchParams(host.location.search);
+      var programme = pageParams.get("programme");
+      if (programme) url.searchParams.set("programme", programme);
+
+      /* UTMs saved by the PostHog snippet on the landing page, else from this page's URL. */
+      var saved = (host.__cwbjj && host.__cwbjj.utms) || {};
+      ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"].forEach(function (key) {
+        var value = saved[key] || pageParams.get(key);
+        if (value) url.searchParams.set(key, value);
+      });
+
+      var ph = host.posthog;
+      if (ph && ph.__loaded) {
+        url.searchParams.set("ph_did", ph.get_distinct_id());
+        var sid = ph.get_session_id && ph.get_session_id();
+        if (sid) url.searchParams.set("ph_sid", sid);
       }
+      frame.setAttribute("src", url.toString());
     }
+
+    var waited = 0;
+    (function waitForPostHog() {
+      if ((host.posthog && host.posthog.__loaded) || waited >= POSTHOG_WAIT) return loadFrame();
+      waited += 100;
+      setTimeout(waitForPostHog, 100);
+    })();
 
     if (window.__cwbjjBookingListener) return;
     window.__cwbjjBookingListener = true;

@@ -1,0 +1,70 @@
+<!--
+  Canary Wharf BJJ: site-wide PostHog tracking for Framer.
+
+  Paste all of this into Framer > Site Settings > General > Custom Code > "End of <head> tag".
+  Replace PROJECT_KEY below with the PostHog project API key (starts "phc_"), the same
+  key as cw-bjj-booking/src/config/analytics.ts.
+
+  Cookieless: PostHog keeps its IDs in page memory only. Nothing is written to cookies,
+  localStorage or sessionStorage, so no cookie banner is needed for this. A visit lasts
+  until the visitor reloads or opens a new tab, so the dashboard counts visits, not people.
+
+  What it sends:
+  - $pageview on every page, including Framer's in-page navigation
+  - cta_clicked { programme } when a "Book a trial" link is clicked on a class page
+-->
+<script>
+  /* PostHog's standard loader (unchanged from their install snippet). */
+  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session identify reset get_distinct_id get_session_id get_property set_config opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+
+  (function () {
+    var PROJECT_KEY = "phc_REPLACE_ME";
+    var BOOKING_PATH = "/book"; /* path of the Framer page that holds the booking form */
+
+    /* Class page -> programme, as shown in the dashboard's "Programme journeys". */
+    var CLASS_PAGES = {
+      "/classes/beginners": "beginners",
+      "/classes/gi": "gi",
+      "/classes/no-gi": "no-gi",
+      "/classes/striking": "striking",
+      "/classes/kids-teens": "kids-teens"
+    };
+
+    /* Keep the landing page's UTMs for the whole visit, so the booking form gets them
+       even after Framer navigates to the booking page without them in the URL. */
+    var utms = {};
+    var params = new URLSearchParams(location.search);
+    ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"].forEach(function (key) {
+      if (params.get(key)) utms[key] = params.get(key);
+    });
+    window.__cwbjj = { utms: utms };
+
+    posthog.init(PROJECT_KEY, {
+      api_host: "https://eu.i.posthog.com",
+      persistence: "memory",
+      person_profiles: "never",
+      capture_pageview: "history_change",
+      capture_pageleave: true,
+      autocapture: false,
+      disable_session_recording: true
+    });
+
+    function trimSlash(path) {
+      return path.length > 1 ? path.replace(/\/+$/, "") : path;
+    }
+
+    document.addEventListener(
+      "click",
+      function (event) {
+        var link = event.target.closest && event.target.closest("a[href]");
+        if (!link) return;
+        var programme = CLASS_PAGES[trimSlash(location.pathname)];
+        if (!programme) return;
+        var to = new URL(link.href, location.href);
+        if (to.origin !== location.origin || trimSlash(to.pathname) !== BOOKING_PATH) return;
+        posthog.capture("cta_clicked", { programme: programme });
+      },
+      true
+    );
+  })();
+</script>

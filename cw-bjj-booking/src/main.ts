@@ -1,8 +1,9 @@
 import "./styles.css";
 import { calendars, findCalendar, type Group } from "./config/calendars";
 import { copy } from "./config/copy";
-import { clearCalendar, mountCalendar, showCalendarLoading } from "./calendar";
+import { clearCalendar, mountCalendar, showCalendarLoading, watchGhlBookings } from "./calendar";
 import { isEmbedded, prefersReducedMotion, reportHeight, scrollToElement } from "./embed";
+import { track } from "./track";
 
 interface Option {
   value: string;
@@ -176,7 +177,9 @@ function renderStep3(animate: boolean) {
   programmeLine.textContent = calendar.label;
   reveal(step3, animate);
 
-  const load = () => mountCalendar(calendarSlot, calendar, () => undefined);
+  const load = () => mountCalendar(calendarSlot, calendar, () =>
+      track("booking_calendar_loaded", { programme: calendar.slug }),
+    );
   if (animate) {
     showCalendarLoading(calendarSlot);
     calendarTimer = window.setTimeout(load, prefersReducedMotion() ? 0 : CALENDAR_DELAY);
@@ -188,6 +191,7 @@ function selectGroup(group: Group, animate: boolean) {
   if (state.group === group) return;
   state.group = group;
   state.slug = null;
+  track("booking_audience_selected", { audience: group });
   renderStep2(animate);
   renderStep3(false);
   if (animate) scrollToStep(step2);
@@ -196,6 +200,7 @@ function selectGroup(group: Group, animate: boolean) {
 function selectProgramme(slug: string, animate: boolean) {
   if (state.slug === slug) return;
   state.slug = slug;
+  track("booking_programme_selected", { programme: slug });
   renderStep3(animate);
   if (animate) scrollToStep(step3);
 }
@@ -230,15 +235,22 @@ function applyDeepLink() {
   if (!calendar) return;
   state.group = calendar.group;
   state.slug = calendar.slug;
+  /* Arriving from a class page answers steps 1 and 2, so record them to keep the funnel in order. */
+  track("booking_audience_selected", { audience: calendar.group, deep_link: "true" });
+  track("booking_programme_selected", { programme: calendar.slug, deep_link: "true" });
   step1.querySelector<HTMLInputElement>(`input[value="${calendar.group}"]`)!.checked = true;
   renderStep2(false);
   step2.querySelector<HTMLInputElement>(`input[value="${calendar.slug}"]`)!.checked = true;
   renderStep3(false);
 }
 
+track("booking_form_viewed");
 renderStep2(false);
 renderStep3(false);
 applyDeepLink();
+watchGhlBookings(() => {
+  if (state.slug) track("booking_completed", { programme: state.slug });
+});
 
 if (isEmbedded) document.documentElement.classList.add("is-embedded");
 reportHeight();
