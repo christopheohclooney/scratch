@@ -2,32 +2,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { Resend } from "resend";
 import { loadDashboard } from "@/lib/data";
 import { weeklyEmail } from "@/lib/email";
-import { timeZone } from "@/lib/period";
 
 /*
-  Sends João's Monday summary. Vercel calls this at 07:00 and 08:00 UTC on Mondays
-  (see vercel.json); it only sends on the run that is 8am in London, so the time
-  stays right through the clock changes. Add ?force=1 to send straight away
-  when testing (still needs the CRON_SECRET).
+  Sends João's Monday summary. Vercel calls this once on Monday mornings (see
+  vercel.json); every call with the CRON_SECRET sends, so calling it by hand
+  sends a test straight away.
 */
 
 export const dynamic = "force-dynamic";
-
-const SEND_HOUR = 8;
-
-function londonHour(now: Date) {
-  return Number(new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", hourCycle: "h23" }).format(now));
-}
 
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
   if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
-  }
-
-  const force = request.nextUrl.searchParams.get("force") === "1";
-  if (!force && londonHour(new Date()) !== SEND_HOUR) {
-    return NextResponse.json({ skipped: `Not ${SEND_HOUR}am in London` });
   }
 
   const to = process.env.REPORT_RECIPIENT;

@@ -106,10 +106,10 @@ These are coded from GHL's API v2 docs and need checking against the live accoun
 
 ## Weekly email
 
-`vercel.json` runs `/api/cron/weekly` at 07:00 and 08:00 UTC every Monday. The route only sends on the run that is 8am in London, so the time stays right when the clocks change.
+`vercel.json` runs `/api/cron/weekly` once every Monday at 07:00 UTC. That's 8am London time in summer and 7am in winter. On Vercel's Hobby plan a cron job can run at most once a day and may fire any time within its hour, so the email arrives between 7 and 9am London time.
 
-- **Change the day or time:** edit `schedule` in `vercel.json` (cron format, in UTC) and `SEND_HOUR` in `app/api/cron/weekly/route.ts` (London hour). For example, Tuesday 9am is `"0 8,9 * * 2"` and `SEND_HOUR = 9`.
-- **Send a test now:** `curl -H "Authorization: Bearer $CRON_SECRET" "https://<dashboard>/api/cron/weekly?force=1"`.
+- **Change the day or time:** edit `schedule` in `vercel.json` (cron format, in UTC). For example, Tuesday around 9am is `"0 8 * * 2"`.
+- **Send a test now:** `curl -H "Authorization: Bearer $CRON_SECRET" "https://<dashboard>/api/cron/weekly"`.
 - **Change the recipient:** update `REPORT_RECIPIENT` in Vercel.
 
 Vercel cron jobs only run on production deployments.
