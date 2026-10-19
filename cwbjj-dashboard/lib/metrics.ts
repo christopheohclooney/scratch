@@ -17,29 +17,73 @@ export interface FunnelStep {
   ofOpened: number | null;
   /* People lost since the previous step. */
   dropped: number | null;
+  /* The same share for the previous period, for the comparison marker. */
+  previousOfOpened: number | null;
 }
 
-export function funnelSteps(counts: FunnelCounts, ghl: GhlState, ghlBookings?: number): FunnelStep[] {
-  const booked = ghl.state === "ok" ? (ghlBookings ?? 0) : null;
-  const raw: [StepKey, string, string, number | null][] = [
-    ["opened", "Opened the booking page", "booking page", counts.opened],
-    ["audience", "Chose Adult or Child", "Adult or Child step", counts.audience],
-    ["programme", "Chose a programme", "programme step", counts.programme],
-    ["calendar", "Saw the calendar", "calendar", counts.calendar],
-    ["booked", "Booked and paid", "booking and payment step", booked],
-  ];
-  return raw.map(([key, label, stepName, count], i) => {
-    const before = i > 0 ? raw[i - 1][3] : null;
+type StepCounts = Record<StepKey, number | null>;
+
+const stepCounts = (c: FunnelCounts, booked: number | null): StepCounts => ({
+  opened: c.opened,
+  audience: c.audience,
+  programme: c.programme,
+  calendar: c.calendar,
+  completed: null,
+  booked,
+});
+
+const stepDefs: [StepKey, string, string][] = [
+  ["opened", "Opened the booking page", "booking page"],
+  ["audience", "Chose Adult or Child", "Adult or Child step"],
+  ["programme", "Chose a programme", "programme step"],
+  ["calendar", "Saw the calendar", "calendar"],
+  ["booked", "Booked and paid", "booking and payment step"],
+];
+
+/*
+  The five funnel steps. Booked comes from GHL, so it's null until GHL is connected.
+  Pass the previous period's counts to get the comparison markers.
+*/
+export function funnelSteps(
+  counts: FunnelCounts,
+  ghl: GhlState,
+  previous?: FunnelCounts,
+): FunnelStep[] {
+  const ok = ghl.state === "ok";
+  const now = stepCounts(counts, ok ? ghl.data.current : null);
+  const before = previous ? stepCounts(previous, ok ? ghl.data.previous : null) : null;
+  return stepDefs.map(([key, label, stepName], i) => {
+    const count = now[key];
+    const prior = i > 0 ? now[stepDefs[i - 1][0]] : null;
+    const previousCount = before?.[key] ?? null;
     return {
       key,
       label,
       stepName,
       count,
       ofOpened: count === null ? null : share(count, counts.opened),
-      dropped: count === null || before === null ? null : Math.max(0, before - count),
+      dropped: count === null || prior === null ? null : Math.max(0, prior - count),
+      previousOfOpened: previousCount === null || !previous ? null : share(previousCount, previous.opened),
     };
   });
 }
+
+/*
+  A plain suggestion for the step where most people leave. Fixed wording per step,
+  not generated, so João sees the same advice for the same situation.
+*/
+export const dropAdvice: Record<StepKey, string> = {
+  opened: "",
+  audience:
+    "People are leaving before choosing Adult or Child. Check the booking page loads quickly on phones and that the first question is easy to see.",
+  programme:
+    "Many people stop at choosing a programme. Clearer class descriptions, or better “Which programme is right for me?” text, may help.",
+  calendar:
+    "People choose a programme but leave before the calendar appears. The calendar can be slow on phones, so it's worth testing on mobile data.",
+  completed: "",
+  booked:
+    "Most people who see a calendar don't book. That covers picking a time, entering details and paying, so check the class times on offer and the price are clear.",
+};
 
 /* The step where the most people left. Ties go to the earlier step. */
 export function biggestDrop(steps: FunnelStep[]): FunnelStep | null {
@@ -56,6 +100,8 @@ export interface ChannelRow {
   /* null when bookings can't be tied to channels yet. */
   bookings: number | null;
   bookingRate: number | null;
+  /* The ranking number (bookings, or reached calendar) for the previous period. */
+  previous: number;
 }
 
 /*
@@ -65,21 +111,30 @@ export interface ChannelRow {
 */
 export const channelBookingsAvailable = (b: BookingData, ghl: GhlState) => ghl.state === "ok" && b.completionTracked;
 
+/* Ranked by bookings when available, otherwise by reached calendar. "Other" always goes last. */
 export function channelRows(b: BookingData, ghl: GhlState): ChannelRow[] {
   const withBookings = channelBookingsAvailable(b, ghl);
+  const before = new Map(channelTotals(b.previousSources).map((t) => [t.key, t]));
+  const rank = (r: ChannelRow) => (withBookings ? r.bookings! : r.reachedCalendar);
   return channelTotals(b.sources)
-    .map((t) => ({
-      key: t.key,
-      label: channelLabels[t.key],
-      visits: t.visits,
-      reachedCalendar: t.reachedCalendar,
-      bookings: withBookings ? t.booked : null,
-      bookingRate: withBookings ? share(t.booked, t.visits) : null,
-    }))
-    .sort((a, b) =>
-      withBookings
-        ? b.bookings! - a.bookings! || b.reachedCalendar - a.reachedCalendar || b.visits - a.visits
-        : b.reachedCalendar - a.reachedCalendar || b.visits - a.visits,
+    .map((t) => {
+      const prev = before.get(t.key);
+      return {
+        key: t.key,
+        label: channelLabels[t.key],
+        visits: t.visits,
+        reachedCalendar: t.reachedCalendar,
+        bookings: withBookings ? t.booked : null,
+        bookingRate: withBookings ? share(t.booked, t.visits) : null,
+        previous: (withBookings ? prev?.booked : prev?.reachedCalendar) ?? 0,
+      };
+    })
+    .sort(
+      (a, b) =>
+        Number(a.key === "other") - Number(b.key === "other") ||
+        rank(b) - rank(a) ||
+        b.reachedCalendar - a.reachedCalendar ||
+        b.visits - a.visits,
     );
 }
 

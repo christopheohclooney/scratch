@@ -36,6 +36,8 @@ export interface FunnelCounts {
 export interface BookingData {
   funnel: { current: FunnelCounts; previous: FunnelCounts };
   sources: SourceRow[];
+  /* The same breakdown for the previous period, for the channel table's comparison. */
+  previousSources: SourceRow[];
   /* True once booking_completed has been seen, meaning bookings can be tied to a channel. */
   completionTracked: boolean;
   ctaClicks: Record<string, number>;

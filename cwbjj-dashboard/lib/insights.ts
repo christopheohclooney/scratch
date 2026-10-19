@@ -16,16 +16,16 @@ export function bookingInsights(b: BookingData, ghl: GhlState, range: Range): st
 
   const lines: string[] = [];
   const rows = channelRows(b, ghl);
+  /* "Other" is a mix of sites, so it's never named as the top channel. */
+  const top = rows.find((r) => r.key !== "other");
 
   if (channelBookingsAvailable(b, ghl)) {
     const total = rows.reduce((s, r) => s + (r.bookings ?? 0), 0);
-    const top = rows[0];
     if (total >= 3 && top?.bookings) {
       lines.push(`${top.label} brought in ${formatPercent(share(top.bookings, total))} of trial bookings ${words.current}.`);
     }
   } else {
     const total = rows.reduce((s, r) => s + r.reachedCalendar, 0);
-    const top = rows[0];
     if (total >= MIN_SAMPLE && top?.reachedCalendar) {
       lines.push(
         `${top.label} brought ${formatPercent(share(top.reachedCalendar, total))} of the people who reached a calendar ${words.current}.`,
@@ -48,7 +48,7 @@ export function bookingInsights(b: BookingData, ghl: GhlState, range: Range): st
     }
   }
 
-  const drop = biggestDrop(funnelSteps(b.funnel.current, ghl, ghl.state === "ok" ? ghl.data.current : undefined));
+  const drop = biggestDrop(funnelSteps(b.funnel.current, ghl));
   if (drop) lines.push(`Most people leave at the ${drop.stepName}.`);
 
   return lines;
@@ -63,4 +63,14 @@ export function siteSummary(site: SiteData, range: Range): string {
   const pct = Math.round(Math.abs(delta) * 100);
   if (pct === 0) return `${capitalise(visits)}, about the same as ${words.previous}.`;
   return `${capitalise(visits)}, ${delta > 0 ? "up" : "down"} ${pct}% on ${words.previous}.`;
+}
+
+/* One plain reading of the device split, e.g. "7 in 10 visits are on a phone or tablet." */
+export function deviceReading(devices: SiteData["devices"]): string | null {
+  const total = devices.mobile + devices.desktop;
+  if (total < MIN_SAMPLE) return null;
+  const inTen = Math.round((devices.mobile / total) * 10);
+  if (inTen >= 6) return `${inTen} in 10 visits are on a phone or tablet, so check changes to the site on a phone first.`;
+  if (inTen <= 4) return `${10 - inTen} in 10 visits are on a computer.`;
+  return "Visits are split about evenly between phones and computers.";
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { bookingInsights, siteSummary } from "../lib/insights";
-import { biggestDrop, channelRows, funnelSteps } from "../lib/metrics";
+import { bookingInsights, deviceReading, siteSummary } from "../lib/insights";
+import { biggestDrop, channelRows, dropAdvice, funnelSteps } from "../lib/metrics";
 import { mockBookings, mockGhl, mockSite } from "../lib/sources/mock";
 import { periodsFor } from "../lib/period";
 import type { BookingData, GhlState } from "../lib/types";
@@ -70,5 +70,38 @@ describe("channelRows", () => {
 describe("siteSummary", () => {
   it("writes one plain sentence", () => {
     expect(siteSummary(mockSite(periods), 7)).toMatch(/^[\d,]+ visits to the site this week, (up|down) \d+% on last week\.$/);
+  });
+});
+
+describe("design pass additions", () => {
+  it("adds the previous period's share to each funnel step", () => {
+    const steps = funnelSteps(
+      { opened: 100, audience: 80, programme: 50, calendar: 40, completed: 0 },
+      missing,
+      { opened: 50, audience: 45, programme: 30, calendar: 20, completed: 0 },
+    );
+    expect(steps.map((s) => s.previousOfOpened)).toEqual([1, 0.9, 0.6, 0.4, null]);
+  });
+
+  it("has advice for every step where people can drop out", () => {
+    for (const key of ["audience", "programme", "calendar", "booked"] as const) expect(dropAdvice[key]).not.toBe("");
+  });
+
+  it("compares each channel with the previous period on its ranking number", () => {
+    const rows = channelRows(bookings, missing);
+    const instagram = rows.find((r) => r.key === "instagram-organic")!;
+    expect(instagram.previous).toBeGreaterThan(0);
+    expect(instagram.previous).toBeLessThan(instagram.reachedCalendar);
+  });
+
+  it("always puts Other last", () => {
+    expect(channelRows(bookings, connected).at(-1)?.key).toBe("other");
+  });
+
+  it("reads the device split in plain words", () => {
+    expect(deviceReading({ mobile: 70, desktop: 30 })).toBe(
+      "7 in 10 visits are on a phone or tablet, so check changes to the site on a phone first.",
+    );
+    expect(deviceReading({ mobile: 3, desktop: 2 })).toBeNull();
   });
 });

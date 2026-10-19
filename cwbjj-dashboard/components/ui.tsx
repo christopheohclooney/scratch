@@ -1,5 +1,5 @@
-import { change, periodWords } from "@/lib/format";
-import type { Range } from "@/lib/types";
+import { change, formatDate, periodWords } from "@/lib/format";
+import type { Periods, Range } from "@/lib/types";
 
 export function Heading({ line1, line2 }: { line1: string; line2: string }) {
   return (
@@ -10,11 +10,25 @@ export function Heading({ line1, line2 }: { line1: string; line2: string }) {
   );
 }
 
-export function SectionHead({ eyebrow, title, note }: { eyebrow: string; title?: string; note?: React.ReactNode }) {
+/* The period in words, under each tab's heading, so it's never mistaken. */
+export function PeriodLine({ periods, range }: { periods: Periods; range: Range }) {
+  return (
+    <p className="period mono">
+      {formatDate(periods.current.from)} to {formatDate(periods.current.to)}
+      <span className="period__vs">
+        {" "}
+        · compared with {range === 7 ? "the week before" : "the 30 days before"}
+      </span>
+    </p>
+  );
+}
+
+/* Section titles are the questions João asks; the note says how to read the answer. */
+export function SectionHead({ eyebrow, title, note }: { eyebrow: string; title: string; note?: React.ReactNode }) {
   return (
     <div className="section__head">
       <span className="eyebrow">{eyebrow}</span>
-      {title ? <h2 className="section__title">{title}</h2> : null}
+      <h2 className="section__title">{title}</h2>
       {note ? <p className="section__note">{note}</p> : null}
     </div>
   );
@@ -29,49 +43,85 @@ export function Delta({
   previous,
   range,
   higherIsBetter = true,
+  short = false,
 }: {
   current: number | null;
   previous: number | null;
   range: Range;
   higherIsBetter?: boolean;
+  /* Arrow and percentage only, for table cells. */
+  short?: boolean;
 }) {
   const words = periodWords(range);
   const delta = change(current, previous);
-  if (delta === null) return <span className="delta">No figures for {words.previous} to compare</span>;
+  if (current === 0 && previous === 0) return <span className="delta">{short ? "–" : `None ${words.previous} either`}</span>;
+  if (delta === null) return <span className="delta">{short ? "New" : `Nothing ${words.previous} to compare`}</span>;
   const pct = Math.round(Math.abs(delta) * 100);
-  if (pct === 0) return <span className="delta">Same as {words.previous}</span>;
+  if (pct === 0) return <span className="delta">{short ? "Same" : `Same as ${words.previous}`}</span>;
   const up = delta > 0;
   const good = up === higherIsBetter;
   return (
     <span className={`delta ${good ? "delta--good" : "delta--bad"}`}>
       <span className="delta__change">
-        <span aria-hidden="true">{up ? "▲" : "▼"}</span> {up ? "Up" : "Down"} {pct}%
+        <span aria-hidden="true">{up ? "▲" : "▼"}</span> {short ? "" : up ? "Up " : "Down "}
+        {pct}%
       </span>
-      <span>vs {words.previous}</span>
+      {short ? null : <span>vs {words.previous}</span>}
     </span>
   );
 }
 
-export function Tile({
+/* The one big number a tab leads with. */
+export function HeroStat({
   label,
   value,
   delta,
-  hint,
-  muted = false,
+  detail,
 }: {
   label: string;
   value: string;
   delta?: React.ReactNode;
-  hint?: string;
-  muted?: boolean;
+  detail?: React.ReactNode;
 }) {
   return (
-    <div className="card tile">
-      <span className="tile__label">{label}</span>
-      <span className={muted ? "tile__value tile__value--muted" : "tile__value"}>{value}</span>
+    <div className="hero">
+      <span className="hero__label">{label}</span>
+      <span className="hero__value">{value}</span>
       {delta}
-      {hint ? <span className="tile__hint">{hint}</span> : null}
+      {detail ? <p className="hero__detail">{detail}</p> : null}
     </div>
+  );
+}
+
+/* Supporting figures, quieter than the hero, in one strip. */
+export function MiniStats({ children }: { children: React.ReactNode }) {
+  return <div className="card mini-stats">{children}</div>;
+}
+
+export function MiniStat({ label, value, delta }: { label: string; value: string; delta?: React.ReactNode }) {
+  return (
+    <div className="mini-stat">
+      <span className="mini-stat__label">{label}</span>
+      <span className="mini-stat__value">{value}</span>
+      {delta}
+    </div>
+  );
+}
+
+/* "What these numbers mean": definitions for someone opening the dashboard after a few weeks away. */
+export function Guide({ items }: { items: [string, string][] }) {
+  return (
+    <details className="guide">
+      <summary>What these numbers mean</summary>
+      <dl>
+        {items.map(([term, meaning]) => (
+          <div key={term}>
+            <dt>{term}</dt>
+            <dd>{meaning}</dd>
+          </div>
+        ))}
+      </dl>
+    </details>
   );
 }
 
@@ -85,3 +135,15 @@ export function SectionError({ what, error }: { what: string; error: string }) {
 }
 
 export const NOT_CONNECTED = "Not connected yet";
+
+export const definitions = {
+  visit:
+    "One visit to the site, from arriving to leaving. Tracking is cookieless, so nothing is stored on people's phones; the trade-off is that someone who comes back another day counts as a new visit.",
+  bounce: "Visits that saw one page and did nothing else.",
+  timeOnSite: "From the first page to the last one in a visit.",
+  bookingRate: "Trial bookings out of the people who opened the booking page.",
+  trialBooking: "A booking on one of the seven trial calendars in GoHighLevel. Cancelled bookings aren't counted; no-shows are, because they booked and paid.",
+  channel:
+    "Where a visit first came from: Instagram, Facebook, Google search, Direct (typed the address or used a bookmark) or Other. Ads show separately when your links are tagged as paid (see the link guide).",
+  reachedCalendar: "Visits where a GoHighLevel booking calendar finished loading on the booking page.",
+};

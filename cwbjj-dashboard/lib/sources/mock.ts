@@ -79,12 +79,21 @@ export function mockBookings(p: Periods, days: number): BookingData {
     { referringDomain: "$direct", utmSource: null, utmMedium: null, inApp: null, visits: r(190), reachedCalendar: r(9), booked: r(1) },
     { referringDomain: "www.bjjglobetrotters.com", utmSource: null, utmMedium: null, inApp: null, visits: r(40), reachedCalendar: r(3), booked: 0 },
   ];
+  /* Last period: less Instagram, a little more Google, so the comparisons have something to show. */
+  const previousShare = [0.72, 0.8, 0.9, 1.1, 1.15, 0.95, 1];
+  const previousSources = sources.map((s, i) => ({
+    ...s,
+    visits: Math.round(s.visits * previousShare[i]),
+    reachedCalendar: Math.round(s.reachedCalendar * previousShare[i]),
+    booked: Math.round(s.booked * previousShare[i]),
+  }));
   return {
     funnel: {
       current: { opened: r(268), audience: r(214), programme: r(141), calendar: r(90), completed: r(14) },
       previous: { opened: r(231), audience: r(180), programme: r(122), calendar: r(74), completed: r(10) },
     },
     sources,
+    previousSources,
     completionTracked: true,
     ctaClicks: { beginners: r(58), gi: r(21), "no-gi": r(17), striking: r(14), "kids-teens": r(33) },
     calendarsReached: {

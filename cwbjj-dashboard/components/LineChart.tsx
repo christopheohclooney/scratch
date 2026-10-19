@@ -10,7 +10,7 @@ interface Point {
 }
 
 const HEIGHT = 220;
-const PAD = { top: 12, right: 8, bottom: 28, left: 40 };
+const PAD = { top: 30, right: 8, bottom: 28, left: 40 };
 
 /* Rounds the top of the axis to a clean number: 0 / 50 / 100 / 150 / 200. */
 function niceMax(max: number) {
@@ -22,7 +22,8 @@ function niceMax(max: number) {
 
 /*
   Daily visits: this period as a white line, the previous period as a grey one.
-  Hovering (or tapping) shows both values for that day.
+  The busiest day and the latest day are labelled; hovering (or tapping) shows
+  both values for any day.
 */
 export function LineChart({
   data,
@@ -64,6 +65,10 @@ export function LineChart({
 
   const last = data.length - 1;
   const h = hover;
+  const busiest = data.reduce((best, d, i) => (d.current > data[best].current ? i : best), 0);
+  /* Label the busiest day unless it would crowd the end label. */
+  const showBusiest = busiest !== last && x(last) - x(busiest) > 130 && data[busiest].current > 0;
+  const labelX = (i: number) => Math.min(Math.max(x(i), PAD.left + 40), width - PAD.right - 40);
 
   return (
     <div className="chart" ref={ref}>
@@ -102,6 +107,21 @@ export function LineChart({
         <path d={path("previous")} fill="none" stroke="var(--chart-previous)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
         <path d={path("current")} fill="none" stroke="var(--chart-current)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
         <circle cx={x(last)} cy={y(data[last].current)} r={4} fill="var(--chart-current)" stroke="var(--surface)" strokeWidth={2} />
+        {h === null ? (
+          <g className="chart__labels">
+            <text x={x(last)} y={y(data[last].current) - 12} textAnchor="end">
+              {formatNumber(data[last].current)}
+            </text>
+            {showBusiest ? (
+              <>
+                <circle cx={x(busiest)} cy={y(data[busiest].current)} r={4} fill="var(--chart-current)" stroke="var(--surface)" strokeWidth={2} />
+                <text x={labelX(busiest)} y={y(data[busiest].current) - 12} textAnchor="middle">
+                  {formatNumber(data[busiest].current)} · busiest day
+                </text>
+              </>
+            ) : null}
+          </g>
+        ) : null}
         {h !== null ? (
           <g>
             <line x1={x(h)} x2={x(h)} y1={PAD.top} y2={y(0)} stroke="var(--text-faint)" strokeWidth={1} />

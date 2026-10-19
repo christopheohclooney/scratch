@@ -134,8 +134,7 @@ export async function fetchSite(p: Periods): Promise<SiteData> {
       const t = times.get(path);
       return { path, visits, avgSeconds: t ? t.total / t.n : null };
     })
-    .sort((a, b) => b.visits - a.visits)
-    .slice(0, 12);
+    .sort((a, b) => b.visits - a.visits);
 
   const devices = { mobile: 0, desktop: 0 };
   for (const [device, n] of deviceRows) {
@@ -167,7 +166,7 @@ export async function fetchBookings(p: Periods): Promise<BookingData> {
       GROUP BY period`),
     /* Where each visit came from, read from its first page view. */
     hogql(`
-      SELECT ref, src, med, in_app, count(), countIf(calendar > 0), countIf(completed > 0)
+      SELECT period, ref, src, med, in_app, count(), countIf(calendar > 0), countIf(completed > 0)
       FROM (${visitsSubquery(
         p,
         `,
@@ -176,8 +175,8 @@ export async function fetchBookings(p: Periods): Promise<BookingData> {
         argMinIf(properties.utm_medium, timestamp, event = '$pageview') AS med,
         argMinIf(${inAppBrowser}, timestamp, event = '$pageview') AS in_app`,
       )})
-      WHERE period = 'current' AND pageviews > 0
-      GROUP BY ref, src, med, in_app`),
+      WHERE pageviews > 0
+      GROUP BY period, ref, src, med, in_app`),
     hogql(`
       SELECT event, properties.programme, count(DISTINCT $session_id)
       FROM events
@@ -201,15 +200,19 @@ export async function fetchBookings(p: Periods): Promise<BookingData> {
     };
   }
 
-  const sources: SourceRow[] = sourceRows.map(([ref, src, med, inApp, visits, cal, done]) => ({
-    referringDomain: str(ref),
-    utmSource: str(src),
-    utmMedium: str(med),
-    inApp: str(inApp),
-    visits: num(visits),
-    reachedCalendar: num(cal),
-    booked: num(done),
-  }));
+  const sources: SourceRow[] = [];
+  const previousSources: SourceRow[] = [];
+  for (const [period, ref, src, med, inApp, visits, cal, done] of sourceRows) {
+    (period === "current" ? sources : previousSources).push({
+      referringDomain: str(ref),
+      utmSource: str(src),
+      utmMedium: str(med),
+      inApp: str(inApp),
+      visits: num(visits),
+      reachedCalendar: num(cal),
+      booked: num(done),
+    });
+  }
 
   const ctaClicks: Record<string, number> = {};
   const calendarsReached: Record<string, number> = {};
@@ -222,6 +225,7 @@ export async function fetchBookings(p: Periods): Promise<BookingData> {
   return {
     funnel,
     sources,
+    previousSources,
     completionTracked: num(completedRows[0]?.[0]) > 0,
     ctaClicks,
     calendarsReached,

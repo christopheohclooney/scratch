@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Bookings } from "@/components/Bookings";
 import { Overview } from "@/components/Overview";
 import { loadDashboard } from "@/lib/data";
-import { formatDate, formatTime } from "@/lib/format";
+import { formatTime } from "@/lib/format";
 import { parseRange, type Range } from "@/lib/types";
 
 type Tab = "overview" | "bookings";
@@ -27,7 +27,10 @@ export default async function DashboardPage({
   return (
     <main className="page">
       <header className="topbar">
-        <span className="eyebrow">Canary Wharf BJJ</span>
+        <div className="brand">
+          <span className="eyebrow">Canary Wharf BJJ</span>
+          <p className="purpose">Is the website turning visits into trial bookings?</p>
+        </div>
         <div className="controls">
           <nav className="segmented" aria-label="Sections">
             <Link className="pill" href={href({ tab: "overview" })} aria-current={tab === "overview" ? "page" : undefined}>
@@ -50,10 +53,6 @@ export default async function DashboardPage({
 
       <div className="meta">
         <span>
-          {formatDate(data.periods.current.from)} to {formatDate(data.periods.current.to)}, compared with{" "}
-          {formatDate(data.periods.previous.from)} to {formatDate(data.periods.previous.to)}
-        </span>
-        <span>
           Last updated {formatTime(data.updatedAt)} ·{" "}
           <form action="/api/logout" method="post" style={{ display: "inline" }}>
             <button className="text-button" type="submit">
@@ -63,17 +62,17 @@ export default async function DashboardPage({
         </span>
       </div>
 
+      {tab === "overview" ? (
+        <Overview site={data.site} range={range} periods={data.periods} />
+      ) : (
+        <Bookings bookings={data.bookings} ghl={data.ghl} range={range} periods={data.periods} />
+      )}
+
       {data.mock ? (
         <p className="mock-banner">
-          Sample numbers for reviewing the layout. Real data appears once PostHog and GoHighLevel are connected.
+          These are sample numbers for reviewing the layout. Real data appears once PostHog and GoHighLevel are connected.
         </p>
       ) : null}
-
-      {tab === "overview" ? (
-        <Overview site={data.site} range={range} />
-      ) : (
-        <Bookings bookings={data.bookings} ghl={data.ghl} range={range} />
-      )}
     </main>
   );
 }
