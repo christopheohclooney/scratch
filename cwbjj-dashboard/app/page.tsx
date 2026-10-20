@@ -23,6 +23,7 @@ export default async function DashboardPage({
     if (data.mock && params.ghl === "off") q.set("ghl", "off");
     return `/?${q}`;
   };
+  const rangeLinks = { 7: href({ range: 7 }), 30: href({ range: 30 }) };
 
   return (
     <main className="page">
@@ -31,41 +32,29 @@ export default async function DashboardPage({
           <span className="eyebrow">Canary Wharf BJJ</span>
           <p className="purpose">Is the website turning visits into trial bookings?</p>
         </div>
-        <div className="controls">
-          <nav className="segmented" aria-label="Sections">
-            <Link className="pill" href={href({ tab: "overview" })} aria-current={tab === "overview" ? "page" : undefined}>
-              Overview
-            </Link>
-            <Link className="pill" href={href({ tab: "bookings" })} aria-current={tab === "bookings" ? "page" : undefined}>
-              Bookings
-            </Link>
-          </nav>
-          <nav className="segmented" aria-label="Date range">
-            <Link className="pill" href={href({ range: 7 })} aria-current={range === 7 ? "page" : undefined}>
-              Last 7 days
-            </Link>
-            <Link className="pill" href={href({ range: 30 })} aria-current={range === 30 ? "page" : undefined}>
-              Last 30 days
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <div className="meta">
-        <span>
+        <p className="meta">
           Last updated {formatTime(data.updatedAt)} ·{" "}
           <form action="/api/logout" method="post" style={{ display: "inline" }}>
             <button className="text-button" type="submit">
               Sign out
             </button>
           </form>
-        </span>
-      </div>
+        </p>
+      </header>
+
+      <nav className="page-nav" aria-label="Sections">
+        <Link href={href({ tab: "overview" })} aria-current={tab === "overview" ? "page" : undefined}>
+          Overview
+        </Link>
+        <Link href={href({ tab: "bookings" })} aria-current={tab === "bookings" ? "page" : undefined}>
+          Bookings
+        </Link>
+      </nav>
 
       {tab === "overview" ? (
-        <Overview site={data.site} range={range} periods={data.periods} />
+        <Overview site={data.site} range={range} periods={data.periods} rangeLinks={rangeLinks} />
       ) : (
-        <Bookings bookings={data.bookings} ghl={data.ghl} range={range} periods={data.periods} />
+        <Bookings bookings={data.bookings} ghl={data.ghl} range={range} periods={data.periods} rangeLinks={rangeLinks} />
       )}
 
       {data.mock ? (

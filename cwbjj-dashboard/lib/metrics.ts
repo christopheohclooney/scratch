@@ -82,7 +82,7 @@ export const dropAdvice: Record<StepKey, string> = {
     "People choose a programme but leave before the calendar appears. The calendar can be slow on phones, so it's worth testing on mobile data.",
   completed: "",
   booked:
-    "Most people who see a calendar don't book. That covers picking a time, entering details and paying, so check the class times on offer and the price are clear.",
+    "Most people who see a calendar don't book. Check the class times on offer suit people, and that the trial price is clear before they reach payment.",
 };
 
 /* The step where the most people left. Ties go to the earlier step. */

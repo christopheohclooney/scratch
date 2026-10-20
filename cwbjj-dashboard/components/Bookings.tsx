@@ -8,17 +8,19 @@ import {
   funnelSteps,
   programmeJourneys,
 } from "@/lib/metrics";
+import { ChannelIcon } from "./ChannelIcon";
 import type { BookingData, GhlState, Loaded, Periods, Range } from "@/lib/types";
 import {
   definitions,
   Delta,
   Guide,
-  Heading,
   HeroStat,
+  IntroHeader,
   NOT_CONNECTED,
-  PeriodLine,
+  type RangeLinks,
   SectionError,
   SectionHead,
+  Summary,
 } from "./ui";
 
 export function Bookings({
@@ -26,25 +28,25 @@ export function Bookings({
   ghl,
   range,
   periods,
+  rangeLinks,
 }: {
   bookings: Loaded<BookingData>;
   ghl: GhlState;
   range: Range;
   periods: Periods;
+  rangeLinks: RangeLinks;
 }) {
   return (
     <>
-      <div className="intro">
-        <Heading line1="Bookings" line2="Where your trials come from." />
-        <PeriodLine periods={periods} range={range} />
-        {bookings.ok ? (
-          <ul className="insights">
-            {bookingInsights(bookings.data, ghl, range).map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
+      <IntroHeader
+        line1="Bookings"
+        line2="Where your trials come from."
+        periods={periods}
+        range={range}
+        rangeLinks={rangeLinks}
+      >
+        {bookings.ok ? <Summary lines={bookingInsights(bookings.data, ghl, range)} /> : null}
+      </IntroHeader>
 
       {ghl.state === "error" ? (
         <div className="stack-gap">
@@ -183,14 +185,20 @@ function BookingSections({ b, ghl, range }: { b: BookingData; ghl: GhlState; ran
                   {formatNumber(s.dropped)} left before this step
                 </span>
               ) : null}
-              {s === worst && dropAdvice[s.key] ? <p className="funnel__advice">{dropAdvice[s.key]}</p> : null}
-              {s.key === "booked" && s !== worst ? (
-                <p className="funnel__note">
-                  This step covers choosing a time, entering details and paying, all inside GoHighLevel.
-                </p>
-              ) : null}
             </div>
           ))}
+          <div className="funnel__footer">
+            {worst && dropAdvice[worst.key] ? (
+              <p className="funnel__advice">
+                <span className="funnel__advice-label">At step {steps.indexOf(worst) + 1}</span>
+                {dropAdvice[worst.key]}
+              </p>
+            ) : null}
+            <p className="funnel__note">
+              Step 5 covers choosing a time, entering details and paying. That all happens inside GoHighLevel, so the form can't
+              see which part people stop at.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -225,7 +233,12 @@ function BookingSections({ b, ghl, range }: { b: BookingData; ghl: GhlState; ran
               ) : (
                 channels.map((c) => (
                   <tr key={c.key}>
-                    <td>{c.label}</td>
+                    <td>
+                      <span className="channel">
+                        <ChannelIcon channel={c.key} />
+                        {c.label}
+                      </span>
+                    </td>
                     <td className="num">{formatNumber(c.visits)}</td>
                     <td className="num">{formatNumber(c.reachedCalendar)}</td>
                     {withBookings ? (

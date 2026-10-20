@@ -7,25 +7,34 @@ import {
   definitions,
   Delta,
   Guide,
-  Heading,
   HeroStat,
+  IntroHeader,
   MiniStat,
   MiniStats,
-  PeriodLine,
+  type RangeLinks,
   SectionError,
   SectionHead,
+  Summary,
 } from "./ui";
 
 const TOP_PAGES = 8;
 
-export function Overview({ site, range, periods }: { site: Loaded<SiteData>; range: Range; periods: Periods }) {
+export function Overview({
+  site,
+  range,
+  periods,
+  rangeLinks,
+}: {
+  site: Loaded<SiteData>;
+  range: Range;
+  periods: Periods;
+  rangeLinks: RangeLinks;
+}) {
   return (
     <>
-      <div className="intro">
-        <Heading line1="Overview" line2="How the website is doing." />
-        <PeriodLine periods={periods} range={range} />
-        {site.ok ? <p className="summary">{siteSummary(site.data, range)}</p> : null}
-      </div>
+      <IntroHeader line1="Overview" line2="How the website is doing." periods={periods} range={range} rangeLinks={rangeLinks}>
+        {site.ok ? <Summary lines={[siteSummary(site.data, range), deviceReading(site.data.devices)]} /> : null}
+      </IntroHeader>
 
       {!site.ok ? <SectionError what="website visits" error={site.error} /> : <SiteSections site={site.data} range={range} />}
 
@@ -46,7 +55,6 @@ function SiteSections({ site, range }: { site: SiteData; range: Range }) {
   const { current, previous } = site.totals;
   const deviceTotal = site.devices.mobile + site.devices.desktop;
   const mobileShare = share(site.devices.mobile, deviceTotal);
-  const reading = deviceReading(site.devices);
 
   /* Named pages only; anything else is summed into one line so raw addresses never show. */
   const named = site.topPages.filter((p) => pageNames[p.path]);
@@ -80,82 +88,58 @@ function SiteSections({ site, range }: { site: SiteData; range: Range }) {
           value={formatDuration(current.avgVisitSeconds)}
           delta={<Delta current={current.avgVisitSeconds} previous={previous.avgVisitSeconds} range={range} short />}
         />
+        <MiniStat label="On a phone or tablet" value={deviceTotal === 0 ? "–" : formatPercent(mobileShare)}>
+          {deviceTotal === 0 ? null : (
+            <span
+              className="split-bar split-bar--mini"
+              role="img"
+              aria-label={`${formatPercent(mobileShare)} on phones and tablets, ${formatPercent(1 - mobileShare!)} on computers`}
+            >
+              {site.devices.mobile > 0 ? <span className="split-bar__a" style={{ width: `${mobileShare! * 100}%` }} /> : null}
+              {site.devices.desktop > 0 ? <span className="split-bar__b" style={{ flex: 1 }} /> : null}
+            </span>
+          )}
+        </MiniStat>
       </MiniStats>
 
-      <div className="split section">
-        <section>
-          <SectionHead
-            eyebrow="Pages"
-            title="What are people looking at?"
-            note="The share is how many visits included that page."
-          />
-          <div className="card table-wrap">
-            <table>
-              <thead>
+      <section className="section">
+        <SectionHead eyebrow="Pages" title="What are people looking at?" note="The share is how many visits included that page." />
+        <div className="card table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Page</th>
+                <th scope="col">Visits</th>
+                <th scope="col">Share</th>
+                <th scope="col">Avg. time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown.length === 0 ? (
                 <tr>
-                  <th scope="col">Page</th>
-                  <th scope="col">Visits</th>
-                  <th scope="col">Share</th>
-                  <th scope="col">Avg. time</th>
+                  <td colSpan={4} className="cell-muted">
+                    No page views yet.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {shown.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="cell-muted">
-                      No page views yet.
-                    </td>
+              ) : (
+                shown.map((p) => (
+                  <tr key={p.path}>
+                    <td>{pageNames[p.path]}</td>
+                    <td className="num">{formatNumber(p.visits)}</td>
+                    <td className="num cell-muted">{formatPercent(share(p.visits, current.visits))}</td>
+                    <td className="num">{formatDuration(p.avgSeconds)}</td>
                   </tr>
-                ) : (
-                  shown.map((p) => (
-                    <tr key={p.path}>
-                      <td>{pageNames[p.path]}</td>
-                      <td className="num">{formatNumber(p.visits)}</td>
-                      <td className="num cell-muted">{formatPercent(share(p.visits, current.visits))}</td>
-                      <td className="num">{formatDuration(p.avgSeconds)}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-            {otherCount > 0 ? (
-              <p className="table-foot">
-                Plus {otherCount} other {otherCount === 1 ? "page" : "pages"} with fewer visits.
-              </p>
-            ) : null}
-          </div>
-        </section>
-
-        <section>
-          <SectionHead eyebrow="Devices" title="Phone or computer?" note={reading ?? undefined} />
-          <div className="card">
-            {deviceTotal === 0 ? (
-              <p className="cell-muted">No visits yet.</p>
-            ) : (
-              <>
-                <div
-                  className="split-bar"
-                  role="img"
-                  aria-label={`${formatPercent(mobileShare)} on phones and tablets, ${formatPercent(1 - mobileShare!)} on computers`}
-                >
-                  {site.devices.mobile > 0 ? <span className="split-bar__a" style={{ width: `${mobileShare! * 100}%` }} /> : null}
-                  {site.devices.desktop > 0 ? <span className="split-bar__b" style={{ flex: 1 }} /> : null}
-                </div>
-                <div className="legend-row">
-                  <span>
-                    <span className="swatch" style={{ background: "var(--chart-current)" }} />
-                    Phone & tablet <span className="mono">{formatPercent(mobileShare)}</span>
-                  </span>
-                  <span>
-                    <span className="swatch" style={{ background: "var(--chart-previous)" }} />
-                    Computer <span className="mono">{formatPercent(1 - mobileShare!)}</span>
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-        </section>
-      </div>
+                ))
+              )}
+            </tbody>
+          </table>
+          {otherCount > 0 ? (
+            <p className="table-foot">
+              Plus {otherCount} other {otherCount === 1 ? "page" : "pages"} with fewer visits.
+            </p>
+          ) : null}
+        </div>
+      </section>
     </>
   );
 }

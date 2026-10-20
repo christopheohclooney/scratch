@@ -1,5 +1,51 @@
+import Link from "next/link";
 import { change, formatDate, periodWords } from "@/lib/format";
 import type { Periods, Range } from "@/lib/types";
+
+export type RangeLinks = Record<Range, string>;
+
+/* The date range switch: one track, the selected option as a solid pill. */
+export function RangeToggle({ range, links }: { range: Range; links: RangeLinks }) {
+  return (
+    <nav className="range-toggle" aria-label="Date range">
+      {([7, 30] as const).map((r) => (
+        <Link key={r} href={links[r]} aria-current={range === r ? "page" : undefined}>
+          {r} days
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+/* Each tab's intro: heading and period on the left, the date range switch on the right. */
+export function IntroHeader({
+  line1,
+  line2,
+  periods,
+  range,
+  rangeLinks,
+  children,
+}: {
+  line1: string;
+  line2: string;
+  periods: Periods;
+  range: Range;
+  rangeLinks: RangeLinks;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="intro">
+      <div className="intro__top">
+        <div className="intro__title">
+          <Heading line1={line1} line2={line2} />
+          <PeriodLine periods={periods} range={range} />
+        </div>
+        <RangeToggle range={range} links={rangeLinks} />
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export function Heading({ line1, line2 }: { line1: string; line2: string }) {
   return (
@@ -7,6 +53,24 @@ export function Heading({ line1, line2 }: { line1: string; line2: string }) {
       <span>{line1}</span>
       <span>{line2}</span>
     </h1>
+  );
+}
+
+/*
+  The plain-English summary at the top of each tab. At most two lines, so it
+  reads as a headline rather than a report.
+*/
+export const SUMMARY_LINES = 2;
+
+export function Summary({ lines }: { lines: (string | null)[] }) {
+  const shown = lines.filter((l): l is string => Boolean(l)).slice(0, SUMMARY_LINES);
+  if (shown.length === 0) return null;
+  return (
+    <ul className="insights">
+      {shown.map((line) => (
+        <li key={line}>{line}</li>
+      ))}
+    </ul>
   );
 }
 
@@ -98,12 +162,22 @@ export function MiniStats({ children }: { children: React.ReactNode }) {
   return <div className="card mini-stats">{children}</div>;
 }
 
-export function MiniStat({ label, value, delta }: { label: string; value: string; delta?: React.ReactNode }) {
+export function MiniStat({
+  label,
+  value,
+  delta,
+  children,
+}: {
+  label: string;
+  value: string;
+  delta?: React.ReactNode;
+  children?: React.ReactNode;
+}) {
   return (
     <div className="mini-stat">
       <span className="mini-stat__label">{label}</span>
       <span className="mini-stat__value">{value}</span>
-      {delta}
+      <span className="mini-stat__extra">{delta ?? children}</span>
     </div>
   );
 }
