@@ -29,7 +29,8 @@ export default async function DashboardPage({
     <main className="page">
       <header className="topbar">
         <div className="brand">
-          <span className="eyebrow">Canary Wharf BJJ</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="logo" src="/cwbjj-logo.svg" alt="Canary Wharf BJJ" width={157} height={28} />
           <p className="purpose">Is the website turning visits into trial bookings?</p>
         </div>
         <p className="meta">

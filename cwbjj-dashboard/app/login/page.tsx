@@ -3,7 +3,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <main className="login">
       <div className="login__card">
-        <span className="eyebrow">Canary Wharf BJJ</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="logo" src="/cwbjj-logo.svg" alt="Canary Wharf BJJ" width={157} height={28} />
         <h1 className="heading">
           <span>Website dashboard</span>
           <span>Sign in to continue.</span>

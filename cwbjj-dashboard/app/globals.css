@@ -371,7 +371,17 @@ th .cell-sub {
 
 .brand {
   display: grid;
-  gap: 6px;
+  gap: 10px;
+}
+.logo {
+  display: block;
+  height: 28px;
+  width: auto;
+}
+@media (max-width: 600px) {
+  .logo {
+    height: 24px;
+  }
 }
 .purpose {
   margin: 0;

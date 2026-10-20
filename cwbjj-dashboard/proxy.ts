@@ -8,5 +8,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!login|api/login|api/cron|_next/static|_next/image|favicon.ico|icon.svg).*)"],
+  matcher: ["/((?!login|api/login|api/cron|_next/static|_next/image|favicon.ico|icon.svg|cwbjj-logo.svg).*)"],
 };
