@@ -869,6 +869,36 @@ td {
   color: var(--bg);
   border-color: var(--text);
 }
+.password {
+  position: relative;
+}
+.password input {
+  width: 100%;
+  padding-right: 72px;
+}
+.login .password__toggle {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  bottom: 6px;
+  min-height: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.login .password__toggle:hover {
+  color: var(--text);
+  background: var(--surface-raised);
+}
+.login .password__toggle:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 0;
+}
 .login__error {
   margin: 0;
   font-size: 13px;

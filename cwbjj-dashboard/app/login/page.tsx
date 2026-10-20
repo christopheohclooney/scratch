@@ -1,3 +1,5 @@
+import { PasswordField } from "@/components/PasswordField";
+
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
   return (
@@ -10,7 +12,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </h1>
         <form method="post" action="/api/login">
           <label htmlFor="password">Password</label>
-          <input id="password" name="password" type="password" autoComplete="current-password" required autoFocus />
+          <PasswordField />
           {error ? <p className="login__error" role="alert">That password didn't work. Try again.</p> : null}
           <button className="pill" type="submit">
             Sign in
