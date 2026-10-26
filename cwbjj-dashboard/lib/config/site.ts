@@ -19,7 +19,7 @@ export const pageNames: Record<string, string> = {
   "/schedule": "Schedule",
   "/membership": "Membership",
   "/support": "Support",
-  "/book": "Book a trial",
+  "/book-a-trial": "Book a trial",
 };
 
 export const normalisePath = (path: string) => {

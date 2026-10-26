@@ -48,7 +48,7 @@ Add `?programme=<slug>` to preselect a programme and load its calendar straight 
 
 `adult-beginners`, `gi`, `no-gi`, `adult-striking`, `kids-4-5`, `kids-6-11`, `teens-12-15`
 
-Put the parameter on the Framer booking page URL (for example `/book?programme=gi`). The Framer snippet passes it through to the iframe. Unknown slugs are ignored.
+Put the parameter on the Framer booking page URL (for example `/book-a-trial?programme=gi`). The Framer snippet passes it through to the iframe. Unknown slugs are ignored.
 
 ## Deploy to Vercel
 

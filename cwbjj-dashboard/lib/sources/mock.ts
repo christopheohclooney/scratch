@@ -40,7 +40,7 @@ export function mockSite(p: Periods): SiteData {
   const pages: [string, number, number][] = [
     ["/", 0.62, 48],
     ["/classes", 0.31, 41],
-    ["/book", 0.22, 96],
+    ["/book-a-trial", 0.22, 96],
     ["/schedule", 0.2, 37],
     ["/classes/beginners", 0.16, 52],
     ["/membership", 0.14, 44],

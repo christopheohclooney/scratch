@@ -18,13 +18,13 @@ Same idea, but they land on the booking page with the class already picked. Chan
 
 | Programme | Link (Instagram story example) |
 |---|---|
-| Beginners | `https://canarywharfbjj.com/book?programme=adult-beginners&utm_source=instagram&utm_medium=social&utm_campaign=story` |
-| Gi | `…/book?programme=gi&utm_source=instagram&utm_medium=social&utm_campaign=story` |
-| No-Gi | `…/book?programme=no-gi&…` |
-| Striking | `…/book?programme=adult-striking&…` |
-| Kids 4 to 5 | `…/book?programme=kids-4-5&…` |
-| Kids 6 to 11 | `…/book?programme=kids-6-11&…` |
-| Teens 12 to 15 | `…/book?programme=teens-12-15&…` |
+| Beginners | `https://canarywharfbjj.com/book-a-trial?programme=adult-beginners&utm_source=instagram&utm_medium=social&utm_campaign=story` |
+| Gi | `…/book-a-trial?programme=gi&utm_source=instagram&utm_medium=social&utm_campaign=story` |
+| No-Gi | `…/book-a-trial?programme=no-gi&…` |
+| Striking | `…/book-a-trial?programme=adult-striking&…` |
+| Kids 4 to 5 | `…/book-a-trial?programme=kids-4-5&…` |
+| Kids 6 to 11 | `…/book-a-trial?programme=kids-6-11&…` |
+| Teens 12 to 15 | `…/book-a-trial?programme=teens-12-15&…` |
 
 ## Meta ads (Instagram and Facebook)
 
