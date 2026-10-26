@@ -10,16 +10,24 @@ import type { BookingData, FunnelCounts, PeriodTotals, Periods, SiteData } from 
   visitor starts a new visit.
 */
 
-export const posthogConfigured = () => Boolean(process.env.POSTHOG_PERSONAL_API_KEY && process.env.POSTHOG_PROJECT_ID);
+/* Values pasted into Vercel can pick up stray spaces or line breaks, so trim them. */
+const env = (name: string) => (process.env[name] ?? "").trim();
+
+export const posthogConfigured = () => Boolean(env("POSTHOG_PERSONAL_API_KEY") && env("POSTHOG_PROJECT_ID"));
 
 type Row = unknown[];
 
 async function hogql(query: string): Promise<Row[]> {
-  const host = (process.env.POSTHOG_HOST ?? "https://eu.posthog.com").replace(/\/+$/, "");
-  const res = await fetch(`${host}/api/projects/${process.env.POSTHOG_PROJECT_ID}/query/`, {
+  const key = env("POSTHOG_PERSONAL_API_KEY");
+  /* The project key (phc_) can only send events; reading needs a personal key (phx_). */
+  if (key.startsWith("phc_")) {
+    throw new Error("POSTHOG_PERSONAL_API_KEY is the project key (starts phc_). It needs a personal API key, which starts phx_.");
+  }
+  const host = (env("POSTHOG_HOST") || "https://eu.posthog.com").replace(/\/+$/, "");
+  const res = await fetch(`${host}/api/projects/${env("POSTHOG_PROJECT_ID")}/query/`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.POSTHOG_PERSONAL_API_KEY}`,
+      Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ query: { kind: "HogQLQuery", query } }),
