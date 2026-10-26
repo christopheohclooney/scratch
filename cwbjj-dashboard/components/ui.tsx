@@ -118,7 +118,10 @@ export function Delta({
 }) {
   const words = periodWords(range);
   const delta = change(current, previous);
-  if (current === 0 && previous === 0) return <span className="delta">{short ? "–" : `None ${words.previous} either`}</span>;
+  const nothingNow = current === null || current === 0;
+  const nothingBefore = previous === null || previous === 0;
+  if (nothingNow && nothingBefore) return <span className="delta">{short ? "–" : `None ${words.previous} either`}</span>;
+  /* "New" only when there's something now and nothing to compare it with. */
   if (delta === null) return <span className="delta">{short ? "New" : `Nothing ${words.previous} to compare`}</span>;
   const pct = Math.round(Math.abs(delta) * 100);
   if (pct === 0) return <span className="delta">{short ? "Same" : `Same as ${words.previous}`}</span>;
