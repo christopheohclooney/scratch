@@ -7,7 +7,7 @@
   Leave it empty and the form sends nothing.
 */
 export const analytics = {
-  projectKey: "",
+  projectKey: "phc_sMAHN9sRgJPxwn8LdsnXVqaTwLAgJHBKxERuDqzoHFdv",
   apiHost: "https://eu.i.posthog.com",
 };
 

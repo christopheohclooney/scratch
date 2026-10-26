@@ -99,7 +99,7 @@ These are coded from GHL's API v2 docs and need checking against the live accoun
 ## Setting up tracking
 
 1. **Create a PostHog project** at eu.posthog.com (EU hosting). Under Project settings, turn off session replay and autocapture. They aren't used.
-2. **Framer:** paste `framer/posthog-snippet.html` into Site Settings → General → Custom Code → End of `<head>` tag. Replace `phc_REPLACE_ME` with the project API key. If the booking page isn't at `/book`, change `BOOKING_PATH`. Publish.
+2. **Framer:** paste `framer/posthog-snippet.html` into Site Settings → General → Custom Code → End of `<head>` tag. If the booking page isn't at `/book`, change `BOOKING_PATH`. Publish.
 3. **Booking form:** put the same project API key in `cw-bjj-booking/src/config/analytics.ts` and push. Re-paste `cw-bjj-booking/framer-embed.html` into the booking page's Embed, because it changed.
 4. **Check it:** visit the site with `?utm_source=test`, go to the booking page and pick a programme. In PostHog → Activity, the page views and booking events should share one person and one session ID, and carry `utm_source=test`.
 5. **Page names:** the friendly names in "Top pages" come from `pageNames` in `lib/config/site.ts`. Update them if the real Framer paths differ.
