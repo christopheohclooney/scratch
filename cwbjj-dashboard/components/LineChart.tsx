@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { formatDate, formatNumber } from "@/lib/format";
 
@@ -104,8 +105,29 @@ export function LineChart({
             </text>
           ) : null,
         )}
-        <path d={path("previous")} fill="none" stroke="var(--chart-previous)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-        <path d={path("current")} fill="none" stroke="var(--chart-current)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        {/* Lines draw in from left to right: last period first, then this one. */}
+        <motion.path
+          d={path("previous")}
+          fill="none"
+          stroke="var(--chart-previous)"
+          strokeWidth={2}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 0.9, ease: [0.22, 0.61, 0.36, 1], delay: 0.15 }}
+        />
+        <motion.path
+          d={path("current")}
+          fill="none"
+          stroke="var(--chart-current)"
+          strokeWidth={2}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 0.9, ease: [0.22, 0.61, 0.36, 1], delay: 0.3 }}
+        />
         <circle cx={x(last)} cy={y(data[last].current)} r={4} fill="var(--chart-current)" stroke="var(--surface)" strokeWidth={2} />
         {h === null ? (
           <g className="chart__labels">

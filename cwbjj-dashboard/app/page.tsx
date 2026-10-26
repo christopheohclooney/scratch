@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { Bookings } from "@/components/Bookings";
 import { Overview } from "@/components/Overview";
+import { SlidingNav, Stagger } from "@/components/motion";
 import { loadDashboard } from "@/lib/data";
 import { formatTime } from "@/lib/format";
 import { parseRange, type Range } from "@/lib/types";
@@ -33,30 +33,35 @@ export default async function DashboardPage({
           <img className="logo" src="/cwbjj-logo.svg" alt="Canary Wharf BJJ" width={157} height={28} />
           <p className="purpose">Is the website turning visits into trial bookings?</p>
         </div>
-        <p className="meta">
+        <div className="meta">
           Last updated {formatTime(data.updatedAt)} ·{" "}
           <form action="/api/logout" method="post" style={{ display: "inline" }}>
             <button className="text-button" type="submit">
               Sign out
             </button>
           </form>
-        </p>
+        </div>
       </header>
 
-      <nav className="page-nav" aria-label="Sections">
-        <Link href={href({ tab: "overview" })} aria-current={tab === "overview" ? "page" : undefined}>
-          Overview
-        </Link>
-        <Link href={href({ tab: "bookings" })} aria-current={tab === "bookings" ? "page" : undefined}>
-          Bookings
-        </Link>
-      </nav>
+      <SlidingNav
+        label="Sections"
+        className="page-nav"
+        indicatorClassName="page-nav__underline"
+        layoutId="page-nav"
+        active={tab}
+        items={[
+          { key: "overview", label: "Overview", href: href({ tab: "overview" }) },
+          { key: "bookings", label: "Bookings", href: href({ tab: "bookings" }) },
+        ]}
+      />
 
-      {tab === "overview" ? (
-        <Overview site={data.site} range={range} periods={data.periods} rangeLinks={rangeLinks} />
-      ) : (
-        <Bookings bookings={data.bookings} ghl={data.ghl} range={range} periods={data.periods} rangeLinks={rangeLinks} />
-      )}
+      <Stagger key={`${tab}-${range}`}>
+        {tab === "overview" ? (
+          <Overview site={data.site} range={range} periods={data.periods} rangeLinks={rangeLinks} />
+        ) : (
+          <Bookings bookings={data.bookings} ghl={data.ghl} range={range} periods={data.periods} rangeLinks={rangeLinks} />
+        )}
+      </Stagger>
 
       {data.mock ? (
         <p className="mock-banner">

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { SlidingNav } from "./motion";
 import { change, formatDate, periodWords } from "@/lib/format";
 import type { Periods, Range } from "@/lib/types";
 
@@ -7,13 +7,14 @@ export type RangeLinks = Record<Range, string>;
 /* The date range switch: one track, the selected option as a solid pill. */
 export function RangeToggle({ range, links }: { range: Range; links: RangeLinks }) {
   return (
-    <nav className="range-toggle" aria-label="Date range">
-      {([7, 30] as const).map((r) => (
-        <Link key={r} href={links[r]} aria-current={range === r ? "page" : undefined}>
-          {r} days
-        </Link>
-      ))}
-    </nav>
+    <SlidingNav
+      label="Date range"
+      className="range-toggle"
+      indicatorClassName="range-toggle__pill"
+      layoutId="range-toggle"
+      active={String(range)}
+      items={([7, 30] as const).map((r) => ({ key: String(r), label: `${r} days`, href: links[r] }))}
+    />
   );
 }
 

@@ -103,7 +103,10 @@ a {
   gap: 8px 16px;
 }
 
-/* Page navigation: titles, not buttons. The current one is underlined on the rule. */
+/*
+  Page navigation: titles, not buttons. The underline under the current one is
+  a single element that slides between them (components/motion.tsx).
+*/
 .page-nav {
   display: flex;
   gap: 28px;
@@ -111,22 +114,26 @@ a {
   border-bottom: 1px solid var(--line);
 }
 .page-nav a {
+  position: relative;
   padding: 10px 0 12px;
-  margin-bottom: -1px;
-  border-bottom: 2px solid transparent;
   font-size: 16px;
   letter-spacing: -0.01em;
   text-decoration: none;
   white-space: nowrap;
   color: var(--text-muted);
-  transition: color 0.25s var(--ease-out);
+  transition: color 0.3s var(--ease-out);
 }
-.page-nav a:hover {
+.page-nav a:hover,
+.page-nav a[data-selected] {
   color: var(--text);
 }
-.page-nav a[aria-current="page"] {
-  color: var(--text);
-  border-bottom-color: var(--text);
+.page-nav__underline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--text);
 }
 .page-nav a:focus-visible,
 .range-toggle a:focus-visible {
@@ -134,7 +141,7 @@ a {
   outline-offset: 2px;
 }
 
-/* Date range: one track, the selected option as a solid pill. */
+/* Date range: one track, with a solid pill that glides to the selected option. */
 .range-toggle {
   display: inline-flex;
   flex: none;
@@ -144,22 +151,29 @@ a {
   background: var(--surface);
 }
 .range-toggle a {
+  position: relative;
   padding: 6px 14px;
   border-radius: 999px;
   font-size: 13px;
   text-decoration: none;
   white-space: nowrap;
   color: var(--text-muted);
-  transition:
-    background 0.25s var(--ease-out),
-    color 0.25s var(--ease-out);
+  transition: color 0.3s var(--ease-out);
 }
 .range-toggle a:hover {
   color: var(--text);
 }
-.range-toggle a[aria-current="page"] {
-  background: var(--text);
+.range-toggle a[data-selected] {
   color: var(--bg);
+}
+.range-toggle__pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--text);
+}
+.nav-label {
+  position: relative;
 }
 
 /* Small buttons like the site's: selected is solid near-white, the rest outlined. */
