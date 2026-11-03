@@ -1,0 +1,60 @@
+name: Broken Arrow macOS build
+
+on:
+  push:
+    paths:
+      - "BrokenArrow/**"
+      - ".github/workflows/broken-arrow-macos.yml"
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S BrokenArrow -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build AU and VST3
+        run: cmake --build build --config Release --target BrokenArrow_AU BrokenArrow_VST3 -j 4
+
+      - name: Locate artefacts
+        run: |
+          set -euo pipefail
+          ART=build/BrokenArrow_artefacts/Release
+          AU="$ART/AU/Broken Arrow.component"
+          VST3="$ART/VST3/Broken Arrow.vst3"
+          test -d "$AU" || { echo "AU bundle not found"; find build/BrokenArrow_artefacts -maxdepth 3; exit 1; }
+          test -d "$VST3" || { echo "VST3 bundle not found"; find build/BrokenArrow_artefacts -maxdepth 3; exit 1; }
+          echo "AU_PATH=$AU" >> "$GITHUB_ENV"
+          echo "VST3_PATH=$VST3" >> "$GITHUB_ENV"
+
+      - name: Ad-hoc sign
+        run: |
+          set -euo pipefail
+          codesign --force --deep -s - "$AU_PATH"
+          codesign --force --deep -s - "$VST3_PATH"
+
+      - name: Validate AU with auval
+        run: |
+          set -euo pipefail
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R "$AU_PATH" ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          auval -a
+          auval -strict -v aufx Bkar Awtx
+
+      - name: Package
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          ditto -c -k --keepParent "$AU_PATH" "dist/BrokenArrow-AU.zip"
+          ditto -c -k --keepParent "$VST3_PATH" "dist/BrokenArrow-VST3.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BrokenArrow-macOS
+          path: dist/
