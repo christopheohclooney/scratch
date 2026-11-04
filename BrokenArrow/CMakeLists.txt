@@ -34,13 +34,26 @@ juce_add_plugin(BrokenArrow
     COPY_PLUGIN_AFTER_BUILD FALSE
 )
 
-target_sources(BrokenArrow
-    PRIVATE
-        Source/PluginProcessor.cpp
-        Source/PluginProcessor.h
-        Source/PluginEditor.cpp
-        Source/PluginEditor.h
+# Plugin sources, shared by the plugin and the offline test app.
+set(BROKENARROW_SOURCES
+    Source/PluginProcessor.cpp
+    Source/PluginProcessor.h
+    Source/PluginEditor.cpp
+    Source/PluginEditor.h
+    Source/ParameterIDs.h
+    Source/dsp/FastRandom.h
+    Source/dsp/RecordBuffer.h
+    Source/dsp/SoftClipper.h
+    Source/dsp/SafetyLimiter.h
+    Source/dsp/GrainEngine.cpp
+    Source/dsp/GrainEngine.h
+    Source/dsp/GrainDelay.cpp
+    Source/dsp/GrainDelay.h
+    Source/dsp/GranularSection.cpp
+    Source/dsp/GranularSection.h
 )
+
+target_sources(BrokenArrow PRIVATE ${BROKENARROW_SOURCES})
 
 target_compile_definitions(BrokenArrow
     PUBLIC
@@ -58,3 +71,39 @@ target_link_libraries(BrokenArrow
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 )
+
+# Offline render tests (Linux by default; off on Apple so the macOS CI build
+# and auval run are unaffected). Build: cmake --build build --target BrokenArrowOfflineRender
+if(APPLE)
+    set(_brokenarrow_tests_default OFF)
+else()
+    set(_brokenarrow_tests_default ON)
+endif()
+option(BROKENARROW_BUILD_TESTS "Build the offline render test app" ${_brokenarrow_tests_default})
+
+if(BROKENARROW_BUILD_TESTS)
+    juce_add_console_app(BrokenArrowOfflineRender PRODUCT_NAME "BrokenArrowOfflineRender")
+
+    target_sources(BrokenArrowOfflineRender
+        PRIVATE
+            Tests/OfflineRender.cpp
+            ${BROKENARROW_SOURCES}
+    )
+
+    # The processor code expects the plugin's name macro.
+    target_compile_definitions(BrokenArrowOfflineRender
+        PRIVATE
+            JucePlugin_Name="Broken Arrow"
+            JUCE_WEB_BROWSER=0
+            JUCE_USE_CURL=0
+    )
+
+    target_link_libraries(BrokenArrowOfflineRender
+        PRIVATE
+            juce::juce_audio_utils
+            juce::juce_dsp
+        PUBLIC
+            juce::juce_recommended_config_flags
+            juce::juce_recommended_warning_flags
+    )
+endif()
