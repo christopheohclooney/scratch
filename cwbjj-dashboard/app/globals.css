@@ -974,3 +974,7 @@ td {
   white-space: normal;
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
 }
+.info-tip__bubble--above {
+  top: auto;
+  bottom: calc(100% + 8px);
+}
