@@ -94,6 +94,7 @@ function SiteSections({ site, range }: { site: SiteData; range: Range }) {
           />
           <MiniStat
             label="Bounce rate"
+            info={definitions.bounce}
             value={formatPercent(current.bounceRate)}
             delta={<Delta current={current.bounceRate} previous={previous.bounceRate} range={range} higherIsBetter={false} short />}
           />

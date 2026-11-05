@@ -1,3 +1,4 @@
+import { InfoTip } from "./InfoTip";
 import { SlidingNav } from "./motion";
 import { change, formatDate, periodWords } from "@/lib/format";
 import type { Periods, Range } from "@/lib/types";
@@ -170,16 +171,22 @@ export function MiniStat({
   label,
   value,
   delta,
+  info,
   children,
 }: {
   label: string;
   value: string;
   delta?: React.ReactNode;
+  /* Optional explanation, shown from a small ⓘ next to the label. */
+  info?: string;
   children?: React.ReactNode;
 }) {
   return (
     <div className="mini-stat">
-      <span className="mini-stat__label">{label}</span>
+      <span className="mini-stat__head">
+        <span className="mini-stat__label">{label}</span>
+        {info ? <InfoTip label={label}>{info}</InfoTip> : null}
+      </span>
       <span className="mini-stat__value">{value}</span>
       <span className="mini-stat__extra">{delta ?? children}</span>
     </div>
@@ -217,7 +224,8 @@ export const NOT_CONNECTED = "Not connected yet";
 export const definitions = {
   visit:
     "One visit to the site, from arriving to leaving. Tracking is cookieless, so nothing is stored on people's phones; the trade-off is that someone who comes back another day counts as a new visit.",
-  bounce: "Visits that saw one page and did nothing else.",
+  bounce:
+    "The share of visits that saw just one page and then left, without opening another page or starting the booking form. Lower is better.",
   timeOnSite: "From the first page to the last one in a visit.",
   bookingRate: "Trial bookings out of the people who opened the booking page.",
   trialBooking: "A booking on one of the seven trial calendars in GoHighLevel. Cancelled bookings aren't counted; no-shows are, because they booked and paid.",

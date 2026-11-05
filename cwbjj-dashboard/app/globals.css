@@ -452,7 +452,6 @@ th .cell-sub {
   grid-template-rows: auto auto auto;
   margin-top: var(--gap);
   padding: 0;
-  overflow: hidden;
 }
 .mini-stat {
   display: grid;
@@ -461,6 +460,13 @@ th .cell-sub {
   row-gap: 4px;
   padding: 16px 20px;
   box-shadow: -1px 0 0 var(--line);
+}
+.mini-stat__head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 .mini-stat__label {
   font-size: 13px;
@@ -923,4 +929,48 @@ td {
   * {
     transition: none !important;
   }
+}
+
+/* ⓘ explanations */
+.info-tip {
+  display: inline-flex;
+}
+.info-tip__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin: -4px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--text-faint);
+  cursor: help;
+  transition: color 0.2s var(--ease-out);
+}
+.info-tip__button:hover,
+.info-tip__button[aria-expanded="true"] {
+  color: var(--text);
+}
+.info-tip__button:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 0;
+}
+.info-tip__bubble {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  width: min(260px, calc(100vw - 48px));
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+  white-space: normal;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
 }
