@@ -211,6 +211,8 @@ a {
 
 .meta {
   margin: 0;
+  /* Centred on the logo beside it. */
+  line-height: 40px;
   font-size: 12px;
   color: var(--text-muted);
 }
@@ -389,12 +391,12 @@ th .cell-sub {
 }
 .logo {
   display: block;
-  height: 28px;
+  height: 40px;
   width: auto;
 }
 @media (max-width: 600px) {
   .logo {
-    height: 24px;
+    height: 32px;
   }
 }
 .purpose {
@@ -977,4 +979,32 @@ td {
 .info-tip__bubble--above {
   top: auto;
   bottom: calc(100% + 8px);
+}
+
+/* Phones: more room between sections so the page breathes. */
+@media (max-width: 600px) {
+  .intro {
+    margin-bottom: 40px;
+  }
+  .section {
+    margin-top: 72px;
+  }
+  .section__head {
+    margin-bottom: 20px;
+  }
+  .mini-stats {
+    margin-top: 24px;
+  }
+  .split {
+    row-gap: 72px;
+  }
+  .guide {
+    margin-top: 80px;
+  }
+}
+
+@media (max-width: 600px) {
+  .meta {
+    line-height: 1.5;
+  }
 }
